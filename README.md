@@ -259,9 +259,12 @@ git clone https://github.com/wow23-glicth/iReserve.git
 cd iReserve
 ```
 
-### 2. Apply the Database Schema
+### 2. Apply the Database Schema and Setup Vault
 
-Open your Supabase project dashboard. Navigate to the SQL Editor and paste the full contents of `schema.sql`. Run the script to create all tables, policies, triggers, and functions.
+Open your Supabase project dashboard. Navigate to the SQL Editor and apply the following scripts:
+1. Paste the full contents of `schema.sql` and run it to create core tables, policies, triggers, and functions.
+2. Paste the contents of `security_schema.sql` and run it to configure audit logs and tightened RLS policies.
+3. Paste the contents of `vault_setup.sql` and run it. This stores the AES-256-GCM encryption key securely in Supabase Vault and registers the `get_encryption_key()` RPC function.
 
 ### 3. Configure Environment Variables
 
@@ -382,12 +385,22 @@ A new random IV is generated for every write operation. This guarantees that enc
 
 **Key Management**
 
-The encryption key is stored in the `.env.local` file under `VITE_FIELD_ENCRYPTION_KEY`. This file is excluded from version control by `.gitignore`. The key must be backed up securely — loss of the key means customer names cannot be decrypted.
+The encryption key is stored securely in **Supabase Vault** (powered by `pgsodium`). At runtime, the frontend requests the key by executing the `get_encryption_key()` RPC function. This function uses `security definer` to safely decrypt the secret on the database side and return it, but only if the user is authenticated. 
 
-To generate a new encryption key:
+Once fetched, the key is stored in a module-level variable in the browser's memory and is cleared upon logout. This ensures that the encryption key never resides in local storage or is built directly into client-side JS bundles.
+
+To generate a new key if you need to rotate it:
 
 ```bash
 node -e "const crypto = require('crypto'); console.log(crypto.randomBytes(32).toString('base64'));"
+```
+
+Then update the vault entry using:
+```sql
+select vault.update_secret(
+  (select id from vault.secrets where name = 'field_encryption_key'),
+  'YOUR_NEW_BASE64_KEY'
+);
 ```
 
 ---
@@ -449,9 +462,8 @@ The following values are never committed to version control:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_FIELD_ENCRYPTION_KEY`
 
-All three are read from `frontend/.env.local` at development time. Before deploying to a production hosting environment, these must be set as environment variables in the hosting platform's configuration.
+Both are read from `frontend/.env.local` at development time. Before deploying to a production hosting environment, these must be set as environment variables in the hosting platform's configuration.
 
 ---
 
@@ -459,5 +471,6 @@ All three are read from `frontend/.env.local` at development time. Before deploy
 
 | File | Purpose |
 |---|---|
-| `frontend/src/utils/crypto.ts` | AES-GCM field-level encryption and decryption functions |
+| `frontend/src/utils/crypto.ts` | AES-GCM field-level encryption and decryption functions with runtime Supabase Vault integration |
 | `security_schema.sql` | Audit log table, trigger function, and scoped RLS policy definitions |
+| `vault_setup.sql` | Database setup for Supabase Vault secrets and the authenticated RPC function |

@@ -10,6 +10,7 @@ import Sales from './views/Sales';
 import Reservations from './views/Reservations';
 import Analytics from './views/Analytics';
 import UserSettings from './views/UserSettings';
+import { clearEncryptionKeyCache } from './utils/crypto';
 
 interface UserSession {
   user: string;
@@ -83,6 +84,7 @@ function App() {
           setSession(userSession);
         } else {
           setSession(null);
+          clearEncryptionKeyCache();
           setPage('home');
         }
         setLoading(false);
@@ -101,6 +103,7 @@ function App() {
       console.error('Logout request failed:', err);
     } finally {
       setSession(null);
+      clearEncryptionKeyCache();
       setPage('home');
     }
   };
