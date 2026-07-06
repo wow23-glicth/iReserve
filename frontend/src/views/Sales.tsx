@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, Coins, Search, ShoppingBag, Download, ArrowUpRight } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { encryptField, decryptField } from '../utils/crypto';
 
 interface Product {
   product_id: number;
@@ -45,15 +46,19 @@ const Sales: React.FC = () => {
       if (salesRes.error) throw salesRes.error;
       if (prodRes.error) throw prodRes.error;
 
-      setSales((salesRes.data || []).map((row: any) => ({
-        sale_id: row.sale_id,
-        customer_name: row.customers?.name || 'Unknown',
-        product_name: row.products?.product_name || 'Deleted Item',
-        unit: row.products?.unit || '',
-        quantity: parseInt(row.quantity),
-        sale_date: row.sale_date,
-        total_amount: parseFloat(row.total_amount)
-      })));
+      const rawSales = salesRes.data || [];
+      const decryptedSales = await Promise.all(
+        rawSales.map(async (row: any) => ({
+          sale_id: row.sale_id,
+          customer_name: await decryptField(row.customers?.name || 'Unknown'),
+          product_name: row.products?.product_name || 'Deleted Item',
+          unit: row.products?.unit || '',
+          quantity: parseInt(row.quantity),
+          sale_date: row.sale_date,
+          total_amount: parseFloat(row.total_amount)
+        }))
+      );
+      setSales(decryptedSales);
 
       setProducts((prodRes.data || []).map((p: any) => ({
         product_id: p.product_id,
@@ -94,19 +99,30 @@ const Sales: React.FC = () => {
     try {
       if (!trimmedCustomer || !targetProductId || qtyVal <= 0) throw new Error('All fields are required.');
 
-      // Get or create customer
+      // Encrypt PII before storing — lookup uses encrypted value
+      const encryptedName = await encryptField(trimmedCustomer);
       let customerId: number;
-      const { data: custData, error: custFindErr } = await supabase.from('customers')
-        .select('customer_id').eq('name', trimmedCustomer).maybeSingle();
+      // Fetch all customers and decrypt to find a match (deterministic lookup)
+      const { data: allCustomers, error: custFindErr } = await supabase
+        .from('customers').select('customer_id, name');
       if (custFindErr) throw custFindErr;
 
-      if (!custData) {
+      let existingCustomer: any = null;
+      for (const c of (allCustomers || [])) {
+        const decrypted = await decryptField(c.name);
+        if (decrypted.toLowerCase() === trimmedCustomer.toLowerCase()) {
+          existingCustomer = c;
+          break;
+        }
+      }
+
+      if (!existingCustomer) {
         const { data: newCust, error: custInsErr } = await supabase.from('customers')
-          .insert({ name: trimmedCustomer }).select('customer_id').single();
+          .insert({ name: encryptedName }).select('customer_id').single();
         if (custInsErr) throw custInsErr;
         customerId = newCust.customer_id;
       } else {
-        customerId = custData.customer_id;
+        customerId = existingCustomer.customer_id;
       }
 
       // Check stock

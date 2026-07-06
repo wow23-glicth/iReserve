@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, CheckCircle, XCircle, Trash2, Calendar, FileText, Search, Filter, Download, ArrowUpRight, Clock, ToggleLeft, ToggleRight } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { encryptField, decryptField } from '../utils/crypto';
 
 interface Product {
   product_id: number;
@@ -49,16 +50,20 @@ const Reservations: React.FC = () => {
       if (resRes.error) throw resRes.error;
       if (prodRes.error) throw prodRes.error;
 
-      setReservations((resRes.data || []).map((row: any) => ({
-        reservation_id: row.reservation_id,
-        customer_name: row.customers?.name || 'Unknown',
-        product_name: row.products?.product_name || 'Deleted Item',
-        unit: row.products?.unit || '',
-        quantity: parseInt(row.quantity),
-        reservation_date: row.reservation_date,
-        status: row.status,
-        product_id: row.product_id
-      })));
+      const rawReservations = resRes.data || [];
+      const decryptedReservations = await Promise.all(
+        rawReservations.map(async (row: any) => ({
+          reservation_id: row.reservation_id,
+          customer_name: await decryptField(row.customers?.name || 'Unknown'),
+          product_name: row.products?.product_name || 'Deleted Item',
+          unit: row.products?.unit || '',
+          quantity: parseInt(row.quantity),
+          reservation_date: row.reservation_date,
+          status: row.status,
+          product_id: row.product_id
+        }))
+      );
+      setReservations(decryptedReservations);
 
       setProducts((prodRes.data || []).map((p: any) => ({
         product_id: p.product_id,
@@ -122,18 +127,27 @@ const Reservations: React.FC = () => {
     try {
       if (!trimmedCustomer || !targetProductId || qtyVal <= 0) throw new Error('All fields are required.');
 
-      // Get or create customer
+      // Encrypt PII before storing
+      const encryptedName = await encryptField(trimmedCustomer);
       let customerId: number;
-      const { data: custData, error: custFindErr } = await supabase.from('customers')
-        .select('customer_id').eq('name', trimmedCustomer);
-      
+      const { data: allCustomers, error: custFindErr } = await supabase
+        .from('customers').select('customer_id, name');
       if (custFindErr) throw custFindErr;
 
-      if (custData && custData.length > 0) {
-        customerId = custData[0].customer_id;
+      let existingCustomer: any = null;
+      for (const c of (allCustomers || [])) {
+        const decrypted = await decryptField(c.name);
+        if (decrypted.toLowerCase() === trimmedCustomer.toLowerCase()) {
+          existingCustomer = c;
+          break;
+        }
+      }
+
+      if (existingCustomer) {
+        customerId = existingCustomer.customer_id;
       } else {
         const { data: newCust, error: custInsertErr } = await supabase.from('customers')
-          .insert({ name: trimmedCustomer }).select('customer_id').single();
+          .insert({ name: encryptedName }).select('customer_id').single();
         if (custInsertErr) throw custInsertErr;
         customerId = newCust.customer_id;
       }
