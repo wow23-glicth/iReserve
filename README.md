@@ -345,10 +345,119 @@ The system uses Supabase's real-time channel subscriptions in the Inventory, Sal
 
 ---
 
-## Security Considerations
+## Security Architecture
 
-- All database access requires a valid Supabase JWT token
-- Row-Level Security policies enforce access rules at the database level regardless of what the frontend sends
-- Password changes use a server-side RPC function that verifies the caller's role before modifying `auth.users`
-- The anon key used in the frontend only grants access to data explicitly permitted by RLS policies
-- No sensitive credentials are stored in frontend source code; all are loaded from environment variables at build time
+This section documents the full security layer applied to the system. Each mechanism targets a distinct attack surface.
+
+---
+
+### Transport Security
+
+All communication between the frontend and Supabase travels over HTTPS. The Supabase client library enforces TLS on every API call and WebSocket connection. No data is transmitted in plaintext.
+
+---
+
+### Authentication and Session Management
+
+Supabase Auth issues signed JWT tokens on login. Every API request includes this token in the Authorization header. The token is verified by Supabase on every request before any database operation is permitted. Sessions expire automatically, and the client library handles token refresh transparently.
+
+---
+
+### Field-Level Encryption (AES-GCM 256-bit)
+
+**File:** `frontend/src/utils/crypto.ts`
+
+Customer names are classified as personally identifiable information (PII). Before a customer name is written to the `customers` table, it is encrypted using AES-GCM with a 256-bit key. When a record is read back, it is decrypted in the browser before being displayed.
+
+This means that anyone with direct database access — including database administrators — sees only ciphertext in the `name` column, not the actual customer name.
+
+The implementation uses the browser's native **Web Crypto API** with no third-party cryptographic libraries. Key properties:
+
+- Algorithm: AES-GCM
+- Key length: 256 bits
+- IV: 96-bit random value generated per encryption operation
+- Storage format: `ivHex:cipherBase64`
+
+A new random IV is generated for every write operation. This guarantees that encrypting the same customer name twice produces a different ciphertext each time, preventing frequency analysis.
+
+**Key Management**
+
+The encryption key is stored in the `.env.local` file under `VITE_FIELD_ENCRYPTION_KEY`. This file is excluded from version control by `.gitignore`. The key must be backed up securely — loss of the key means customer names cannot be decrypted.
+
+To generate a new encryption key:
+
+```bash
+node -e "const crypto = require('crypto'); console.log(crypto.randomBytes(32).toString('base64'));"
+```
+
+---
+
+### Audit Log
+
+**File:** `security_schema.sql`
+
+Every `INSERT`, `UPDATE`, and `DELETE` operation on the five core tables is recorded automatically by a PostgreSQL trigger function. The audit log captures:
+
+| Column | Description |
+|---|---|
+| table_name | The table where the change occurred |
+| operation | INSERT, UPDATE, or DELETE |
+| record_id | The primary key of the affected row |
+| changed_by | The UUID of the authenticated user who made the change |
+| changed_at | UTC timestamp of the operation |
+| old_data | Full JSON snapshot of the row before the change |
+| new_data | Full JSON snapshot of the row after the change |
+
+The trigger uses `security definer` to write to the audit table regardless of the caller's permissions. No client-side code can insert, update, or delete audit log rows. The RLS policy on `audit_log` allows authenticated users to read it but not modify it.
+
+---
+
+### Scoped Row-Level Security Policies
+
+The original RLS policies granted all authenticated staff full `INSERT`, `UPDATE`, and `DELETE` access to all tables. These have been tightened:
+
+- `DELETE` on the `products` table is restricted to the `Admin` role only
+- `DELETE` on the `sales` table is restricted to the `Admin` role only. Sales records are treated as an immutable financial ledger. Regular staff and managers cannot remove transactions.
+- `SELECT` and `INSERT` on products and sales remain available to all authenticated staff
+
+---
+
+### Browser Security Headers
+
+The following HTTP security headers are declared as `<meta>` tags in `index.html`. They instruct the browser to enforce strict content policies regardless of server configuration.
+
+| Header | Effect |
+|---|---|
+| Content-Security-Policy | Restricts script and style sources to known origins. Blocks inline JavaScript injection (XSS). Disallows framing by external pages (clickjacking). |
+| X-Content-Type-Options: nosniff | Prevents the browser from MIME-sniffing responses and executing them as an unintended content type. |
+| Referrer-Policy: strict-origin-when-cross-origin | Limits the URL information sent to external servers in the Referer header. |
+| Permissions-Policy | Disables access to camera, microphone, and geolocation APIs at the browser level. |
+
+The Content Security Policy `connect-src` directive limits outbound API calls to the specific Supabase project URL and its WebSocket endpoint only. No other external domains can receive data from the browser.
+
+---
+
+### Database Encryption at Rest
+
+Supabase encrypts all data at rest using AES-256 at the storage volume level. This is managed by the cloud infrastructure and applies to all table rows, including those not covered by field-level encryption. The field-level encryption layer described above provides an additional independent protection on top of this.
+
+---
+
+### Environment Variable Discipline
+
+The following values are never committed to version control:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_FIELD_ENCRYPTION_KEY`
+
+All three are read from `frontend/.env.local` at development time. Before deploying to a production hosting environment, these must be set as environment variables in the hosting platform's configuration.
+
+---
+
+### Security Files Added
+
+| File | Purpose |
+|---|---|
+| `frontend/src/utils/crypto.ts` | AES-GCM field-level encryption and decryption functions |
+| `security_schema.sql` | Audit log table, trigger function, and scoped RLS policy definitions |
