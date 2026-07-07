@@ -301,6 +301,16 @@ npm run dev
 
 The application will start at `http://localhost:5173`.
 
+### 6. Deploying to Vercel
+
+If you deploy this project to Vercel, configure the following settings in your Vercel project setup:
+
+* **Framework Preset**: `Vite`
+* **Root Directory**: `frontend` (this is critical since the React/Vite app is located inside the subfolder)
+* **Build Command**: `npm run build`
+* **Output Directory**: `dist`
+* **Environment Variables**: Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` under the project settings.
+
 ---
 
 ## Project File Structure
