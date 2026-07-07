@@ -233,7 +233,7 @@ const Reservations: React.FC = () => {
         customer_id: custData.customer_id,
         product_id: prodId,
         quantity: qty,
-        total_price: totalPrice
+        total_amount: totalPrice
       });
       if (saleErr) throw saleErr;
 
