@@ -18,7 +18,7 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ page, role, setPage, onLogout, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ page, setPage, onLogout, isOpen, onClose }) => {
   return (
     <>
       {/* Click-outside backdrop overlay */}

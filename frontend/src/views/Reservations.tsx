@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Trash2, Calendar, FileText, Search, Filter, Download, ArrowUpRight, Clock, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 
@@ -338,7 +338,7 @@ const Reservations: React.FC = () => {
             <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{statsTotal}</h2>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All time requests</span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
             <FileText size={20} />
           </div>
         </div>
@@ -353,7 +353,7 @@ const Reservations: React.FC = () => {
               <ArrowUpRight size={10} /> Active reserves
             </span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: '#22C55E', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
             <CheckCircle size={20} />
           </div>
         </div>
@@ -366,7 +366,7 @@ const Reservations: React.FC = () => {
             <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#F59E0B' }}>{statsPending}</h2>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Awaiting action</span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: '#F59E0B', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', color: '#F59E0B', justifyContent: 'center' }}>
             <Clock size={20} />
           </div>
         </div>
@@ -379,7 +379,7 @@ const Reservations: React.FC = () => {
             <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#EF4444' }}>{statsCancelled}</h2>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Declined or cancelled</span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: '#EF4444', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', color: '#EF4444', justifyContent: 'center' }}>
             <XCircle size={20} />
           </div>
         </div>

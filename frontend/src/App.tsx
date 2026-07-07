@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Wrench } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';

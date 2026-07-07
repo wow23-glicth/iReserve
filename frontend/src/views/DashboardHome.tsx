@@ -193,7 +193,7 @@ const DashboardHome: React.FC = () => {
           </div>
         ) : lowStock.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {lowStock.map((item, idx) => (
+            {lowStock.map((item) => (
               <div 
                 key={item.product_id} 
                 style={{

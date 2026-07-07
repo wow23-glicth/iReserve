@@ -202,7 +202,7 @@ const Sales: React.FC = () => {
               <ArrowUpRight size={10} /> Live sync
             </span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: '#22C55E', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
             <Coins size={20} />
           </div>
         </div>
@@ -215,7 +215,7 @@ const Sales: React.FC = () => {
             <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{sales.length}</h2>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All time logs</span>
           </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifycontent: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
             <ShoppingBag size={20} />
           </div>
         </div>
@@ -258,7 +258,7 @@ const Sales: React.FC = () => {
 
       {/* ── Toolbar: Search & Export ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, maxwidth: '380px' }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: '380px' }}>
           <input
             type="text"
             className="form-input"

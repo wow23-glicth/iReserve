@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Award, ShoppingBag, Loader2, ArrowUpRight, Target, Activity } from 'lucide-react';
+import { TrendingUp, Award, ShoppingBag, Loader2, ArrowUpRight, Activity } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import {
   Chart as ChartJS,
@@ -239,7 +239,7 @@ const Analytics: React.FC = () => {
         position: 'right' as const,
         labels: {
           color: '#1F2937', // dark text color for readability in light mode
-          font: { family: 'Inter', size: 12, weight: '500' as const },
+          font: { family: 'Inter', size: 12, weight: 500 },
           boxWidth: 12,
           padding: 12
         }
