@@ -97,20 +97,13 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Hidden */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(102, 117, 107, 0.2);
-  border-radius: 100px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 117, 107, 0.35);
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Glassmorphism Panel */
