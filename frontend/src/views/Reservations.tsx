@@ -70,7 +70,13 @@ const Reservations: React.FC = () => {
         product_name: p.product_name,
         unit: p.unit,
         available: p.stock - p.reserved_stock
-      })));
+      })).sort((a, b) => {
+        const aOut = a.available <= 0;
+        const bOut = b.available <= 0;
+        if (aOut && !bOut) return 1;
+        if (!aOut && bOut) return -1;
+        return a.product_name.localeCompare(b.product_name);
+      }));
     } catch (err: any) {
       setError(err.message || 'Failed to load data.');
     } finally {
@@ -392,7 +398,7 @@ const Reservations: React.FC = () => {
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Customer Name</label>
             <input
-              type="text" className="form-input" placeholder="e.g. porman dice"
+              type="text" className="form-input" placeholder="Name"
               value={customerName} onChange={(e) => setCustomerName(e.target.value)}
               required
             />

@@ -95,6 +95,25 @@ function App() {
     };
   }, []);
 
+  // Helper function to check if page is allowed for a role
+  const isPageAllowed = (pageName: string, userRole: string) => {
+    if (userRole === 'Admin') return true;
+    if (userRole === 'Manager') {
+      return pageName !== 'users';
+    }
+    if (userRole === 'Cashier') {
+      return ['home', 'sales', 'reservations', 'analytics'].includes(pageName);
+    }
+    return false;
+  };
+
+  // Redirect to home if user does not have permission for the current page
+  useEffect(() => {
+    if (session && !isPageAllowed(page, session.role)) {
+      setPage('home');
+    }
+  }, [page, session]);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -145,7 +164,8 @@ function App() {
 
   // Helper render view function
   const renderView = () => {
-    switch (page) {
+    const activePage = isPageAllowed(page, session.role) ? page : 'home';
+    switch (activePage) {
       case 'home':
         return <DashboardHome />;
       case 'products':

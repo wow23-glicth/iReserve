@@ -18,7 +18,18 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ page, setPage, onLogout, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ page, role, setPage, onLogout, isOpen, onClose }) => {
+  const canAccess = (targetPage: string) => {
+    if (role === 'Admin') return true;
+    if (role === 'Manager') {
+      return targetPage !== 'users';
+    }
+    if (role === 'Cashier') {
+      return ['home', 'sales', 'reservations', 'analytics'].includes(targetPage);
+    }
+    return false;
+  };
+
   return (
     <>
       {/* Click-outside backdrop overlay */}
@@ -79,48 +90,60 @@ const Sidebar: React.FC<SidebarProps> = ({ page, setPage, onLogout, isOpen, onCl
             <span className="nav-text">Dashboard</span>
           </button>
 
-          <button 
-            className={`nav-link ${page === 'products' ? 'active' : ''}`}
-            onClick={() => { setPage('products'); onClose(); }}
-          >
-            <Package />
-            <span className="nav-text">Inventory</span>
-          </button>
+          {canAccess('products') && (
+            <button 
+              className={`nav-link ${page === 'products' ? 'active' : ''}`}
+              onClick={() => { setPage('products'); onClose(); }}
+            >
+              <Package />
+              <span className="nav-text">Inventory</span>
+            </button>
+          )}
 
-          <button 
-            className={`nav-link ${page === 'sales' ? 'active' : ''}`}
-            onClick={() => { setPage('sales'); onClose(); }}
-          >
-            <Coins />
-            <span className="nav-text">Sales</span>
-          </button>
+          {canAccess('sales') && (
+            <button 
+              className={`nav-link ${page === 'sales' ? 'active' : ''}`}
+              onClick={() => { setPage('sales'); onClose(); }}
+            >
+              <Coins />
+              <span className="nav-text">Sales</span>
+            </button>
+          )}
 
-          <button 
-            className={`nav-link ${page === 'reservations' ? 'active' : ''}`}
-            onClick={() => { setPage('reservations'); onClose(); }}
-          >
-            <Calendar />
-            <span className="nav-text">Reservations</span>
-          </button>
+          {canAccess('reservations') && (
+            <button 
+              className={`nav-link ${page === 'reservations' ? 'active' : ''}`}
+              onClick={() => { setPage('reservations'); onClose(); }}
+            >
+              <Calendar />
+              <span className="nav-text">Reservations</span>
+            </button>
+          )}
 
-          <button 
-            className={`nav-link ${page === 'analytics' ? 'active' : ''}`}
-            onClick={() => { setPage('analytics'); onClose(); }}
-          >
-            <BarChart3 />
-            <span className="nav-text">Analytics</span>
-          </button>
+          {canAccess('analytics') && (
+            <button 
+              className={`nav-link ${page === 'analytics' ? 'active' : ''}`}
+              onClick={() => { setPage('analytics'); onClose(); }}
+            >
+              <BarChart3 />
+              <span className="nav-text">Analytics</span>
+            </button>
+          )}
 
-          <div style={{ margin: '1rem 0', borderTop: '1px solid rgba(255, 255, 255, 0.1)', opacity: 0.3 }} className="sidebar-divider"></div>
+          {canAccess('users') && (
+            <>
+              <div style={{ margin: '1rem 0', borderTop: '1px solid rgba(255, 255, 255, 0.1)', opacity: 0.3 }} className="sidebar-divider"></div>
 
-          <button 
-            className={`nav-link ${page === 'users' ? 'active' : ''}`}
-            onClick={() => { setPage('users'); onClose(); }}
-            style={{ marginTop: 'auto' }}
-          >
-            <Users />
-            <span className="nav-text">User Settings</span>
-          </button>
+              <button 
+                className={`nav-link ${page === 'users' ? 'active' : ''}`}
+                onClick={() => { setPage('users'); onClose(); }}
+                style={{ marginTop: 'auto' }}
+              >
+                <Users />
+                <span className="nav-text">User Settings</span>
+              </button>
+            </>
+          )}
 
           <button 
             className="nav-link danger"

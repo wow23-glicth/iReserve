@@ -233,7 +233,7 @@ const UserSettings: React.FC = () => {
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Full Name</label>
             <input
-              type="text" className="form-input" placeholder="e.g. porman dice"
+              type="text" className="form-input" placeholder="Name"
               value={addName} onChange={(e) => setAddName(e.target.value)} required
             />
           </div>

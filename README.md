@@ -134,6 +134,16 @@ All tables use Supabase Row-Level Security. No unauthenticated user can read or 
 
 ---
 
+## Role-Based Access Control (RBAC)
+
+The frontend application enforces user access boundaries by restricting component rendering, page routing, and search command shortcuts based on the user's role:
+
+- **Cashier**: Can only view and access the Dashboard, Sales, Reservations, and Analytics modules. Restricted sections (Inventory and User Settings) are hidden from the navigation sidebar and the command palette (Ctrl+K). Any manual or programmatic navigation to restricted pages is intercepted and redirected back to the Dashboard.
+- **Manager**: Can view and access all sections except User Settings.
+- **Admin**: Has unrestricted access to all modules, including user account management (User Settings).
+
+---
+
 ## Database Triggers and Functions
 
 ### Automatic Profile Creation
@@ -176,6 +186,7 @@ Allows staff to manage the product catalog:
 - Edit product details inline
 - Adjust stock quantities with increment and decrement controls
 - Delete products when they are no longer carried
+- Download the complete inventory list as a CSV export file (Admins and Managers)
 
 ### Sales
 

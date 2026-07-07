@@ -58,14 +58,25 @@ const Header: React.FC<HeaderProps> = ({ page, userName, role, setPage, onToggle
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showPalette]);
 
+  const isPageAllowed = (pageName: string) => {
+    if (role === 'Admin') return true;
+    if (role === 'Manager') {
+      return pageName !== 'users';
+    }
+    if (role === 'Cashier') {
+      return ['home', 'sales', 'reservations', 'analytics'].includes(pageName);
+    }
+    return false;
+  };
+
   const navOptions = [
-    { label: 'Go to Dashboard', icon: <Cpu size={16} />, action: () => setPage('home') },
-    { label: 'Go to Inventory', icon: <Package size={16} />, action: () => setPage('products') },
-    { label: 'Go to Sales', icon: <Coins size={16} />, action: () => setPage('sales') },
-    { label: 'Go to Reservations', icon: <Calendar size={16} />, action: () => setPage('reservations') },
-    { label: 'Go to Analytics', icon: <BarChart3 size={16} />, action: () => setPage('analytics') },
-    { label: 'Go to User Settings', icon: <Users size={16} />, action: () => setPage('users') }
-  ];
+    { label: 'Go to Dashboard', page: 'home', icon: <Cpu size={16} />, action: () => setPage('home') },
+    { label: 'Go to Inventory', page: 'products', icon: <Package size={16} />, action: () => setPage('products') },
+    { label: 'Go to Sales', page: 'sales', icon: <Coins size={16} />, action: () => setPage('sales') },
+    { label: 'Go to Reservations', page: 'reservations', icon: <Calendar size={16} />, action: () => setPage('reservations') },
+    { label: 'Go to Analytics', page: 'analytics', icon: <BarChart3 size={16} />, action: () => setPage('analytics') },
+    { label: 'Go to User Settings', page: 'users', icon: <Users size={16} />, action: () => setPage('users') }
+  ].filter(opt => isPageAllowed(opt.page));
 
   const filteredOptions = navOptions.filter(opt =>
     opt.label.toLowerCase().includes(searchQuery.toLowerCase())

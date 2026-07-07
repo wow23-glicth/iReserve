@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle } from 'lucide-react';
+import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 interface Product {
@@ -139,6 +139,30 @@ const Inventory: React.FC = () => {
     } finally { setDeleting(false); }
   };
 
+  const handleDownloadCSV = () => {
+    const headers = ['Product ID', 'Product Name', 'Unit Type', 'Price (PHP)', 'Total Stock', 'Reserved Stock', 'Available Stock'];
+    const csvRows = [
+      headers.join(','),
+      ...products.map(p => [
+        p.product_id,
+        `"${p.product_name.replace(/"/g, '""')}"`,
+        `"${p.unit.replace(/"/g, '""')}"`,
+        p.price.toFixed(2),
+        p.stock,
+        p.reserved_stock,
+        p.available
+      ].join(','))
+    ];
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `PJP_Inventory_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredProducts = products.filter(p => 
     p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.product_id.toString().includes(searchQuery)
@@ -207,6 +231,17 @@ const Inventory: React.FC = () => {
           />
           <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
         </div>
+
+        {products.length > 0 && (
+          <button 
+            type="button"
+            onClick={handleDownloadCSV}
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '42px' }}
+          >
+            <Download size={15} /> Export CSV
+          </button>
+        )}
       </div>
 
       {/* ── PRODUCTS TABLE ── */}
