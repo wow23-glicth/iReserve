@@ -260,7 +260,7 @@ const Inventory: React.FC = () => {
                   <th>Price</th>
                   <th>Available Stock</th>
                   <th>Reserved</th>
-                  <th style={{ width: '150px', textAlign: 'right' }}>Actions</th>
+                  <th style={{ width: '150px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,7 +268,7 @@ const Inventory: React.FC = () => {
                   <tr key={p.product_id}>
                     <td style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>#{p.product_id}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                         <strong style={{ color: 'var(--text-primary)' }}>{p.product_name}</strong>
                         <span className="badge badge-info">{p.unit}</span>
                       </div>
@@ -283,8 +283,8 @@ const Inventory: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ color: 'var(--text-secondary)' }}>{p.reserved_stock}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm" 
                           onClick={() => handleOpenEdit(p)}

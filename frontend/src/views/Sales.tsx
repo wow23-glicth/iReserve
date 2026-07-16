@@ -297,7 +297,7 @@ const Sales: React.FC = () => {
                   <th>Customer</th>
                   <th>Product Purchased</th>
                   <th>Quantity</th>
-                  <th style={{ textAlign: 'right' }}>Total Paid</th>
+                  <th style={{ textAlign: 'center' }}>Total Paid</th>
                 </tr>
               </thead>
               <tbody>
@@ -309,7 +309,7 @@ const Sales: React.FC = () => {
                     <td><strong style={{ color: 'var(--text-primary)' }}>{sale.customer_name}</strong></td>
                     <td>{sale.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({sale.unit})</span></td>
                     <td style={{ fontWeight: 600 }}>{sale.quantity}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
                       ₱{sale.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                   </tr>

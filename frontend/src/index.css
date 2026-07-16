@@ -584,9 +584,9 @@ h1, h2, h3, h4, h5, h6 {
   transition: background-color 0.2s ease;
 }
 
-/* Keep reservation headings centered directly above their values. */
-.reservations-table th,
-.reservations-table td {
+/* Keep every table heading centered directly above its values. */
+.custom-table th,
+.custom-table td {
   text-align: center;
 }
 

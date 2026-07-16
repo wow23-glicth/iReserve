@@ -293,7 +293,7 @@ const UserSettings: React.FC = () => {
                   <th>Full Name</th>
                   <th>Username / Email</th>
                   <th>System Role</th>
-                  <th style={{ width: '150px', textAlign: 'right' }}>Actions</th>
+                  <th style={{ width: '150px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -309,8 +309,8 @@ const UserSettings: React.FC = () => {
                         {u.role}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm" 
                           onClick={() => handleOpenEdit(u)}
