@@ -853,13 +853,10 @@ h1, h2, h3, h4, h5, h6 {
   .page-header {
     padding: 0.75rem 1rem !important;
   }
-  .page-header .search-bar-mock {
-    display: none !important;
-  }
   .page-header .user-info-text {
     display: none !important;
   }
-  .page-header > div:nth-child(3) > div:first-child {
+  .page-header .header-actions > div:first-child {
     display: none !important;
   }
 

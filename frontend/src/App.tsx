@@ -206,7 +206,6 @@ function App() {
           page={page} 
           userName={session.user} 
           role={session.role} 
-          setPage={setPage}
           onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         />
         
