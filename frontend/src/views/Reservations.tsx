@@ -495,7 +495,7 @@ const Reservations: React.FC = () => {
                   <th>Quantity</th>
                   <th>Date Requested</th>
                   <th>Status</th>
-                  <th style={{ width: '250px', textAlign: 'right' }}>Actions</th>
+                  <th style={{ width: '250px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -520,8 +520,8 @@ const Reservations: React.FC = () => {
                         {res.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                         {/* Pending Actions */}
                         {res.status === 'Pending' && (
                           <>

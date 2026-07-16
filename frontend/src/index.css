@@ -584,6 +584,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: background-color 0.2s ease;
 }
 
+/* Keep reservation headings centered directly above their values. */
+.reservations-table th,
+.reservations-table td {
+  text-align: center;
+}
+
 /* Alternating Row Colors */
 .custom-table tbody tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.15);
