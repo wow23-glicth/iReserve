@@ -12,6 +12,7 @@ interface Product {
 
 interface ReservationRecord {
   reservation_id: number;
+  customer_id: number;
   customer_name: string;
   product_name: string;
   unit: string;
@@ -54,6 +55,7 @@ const Reservations: React.FC = () => {
       const decryptedReservations = await Promise.all(
         rawReservations.map(async (row: any) => ({
           reservation_id: row.reservation_id,
+          customer_id: row.customer_id,
           customer_name: await decryptField(row.customers?.name || 'Unknown'),
           product_name: row.products?.product_name || 'Deleted Item',
           unit: row.products?.unit || '',
@@ -221,29 +223,26 @@ const Reservations: React.FC = () => {
   };
 
   // CLAIM RESERVATION (converts approved reservation to a Sale record)
-  const handleClaim = async (resId: number, prodId: number, qty: number, customerName: string) => {
+  const handleClaim = async (resId: number, prodId: number, qty: number, customerId: number) => {
     setActionId(resId); setError(null);
     try {
-      // 1. Get customer ID
-      const { data: custData, error: custErr } = await supabase.from('customers').select('customer_id').eq('name', customerName).single();
-      if (custErr) throw custErr;
-
-      // 2. Get product price
+      // 1. Get product price
       const { data: prodData, error: prodErr } = await supabase.from('products').select('price, stock, reserved_stock').eq('product_id', prodId).single();
       if (prodErr) throw prodErr;
 
       const totalPrice = prodData.price * qty;
 
-      // 3. Insert sale
+      // 2. Insert sale using the reservation's customer ID. Customer names are
+      // encrypted at rest, so looking up an ID by the decrypted display name fails.
       const { error: saleErr } = await supabase.from('sales').insert({
-        customer_id: custData.customer_id,
+        customer_id: customerId,
         product_id: prodId,
         quantity: qty,
         total_amount: totalPrice
       });
       if (saleErr) throw saleErr;
 
-      // 4. Update product stock (deduct actual stock and release reserved stock)
+      // 3. Update product stock (deduct actual stock and release reserved stock)
       const { error: updateProdErr } = await supabase.from('products')
         .update({
           stock: prodData.stock - qty,
@@ -251,7 +250,7 @@ const Reservations: React.FC = () => {
         }).eq('product_id', prodId);
       if (updateProdErr) throw updateProdErr;
 
-      // 5. Update reservation status to Claimed
+      // 4. Update reservation status to Claimed
       const { error: updateResErr } = await supabase.from('reservations')
         .update({ status: 'Claimed' }).eq('reservation_id', resId);
       if (updateResErr) throw updateResErr;
@@ -552,7 +551,7 @@ const Reservations: React.FC = () => {
                           <>
                             <button
                               className="btn btn-primary btn-sm"
-                              onClick={() => handleClaim(res.reservation_id, res.product_id, res.quantity, res.customer_name)}
+                              onClick={() => handleClaim(res.reservation_id, res.product_id, res.quantity, res.customer_id)}
                               disabled={actionId !== null}
                               style={{ padding: '0.35rem 0.75rem' }}
                               title="Claim Order & Convert to Sale"
