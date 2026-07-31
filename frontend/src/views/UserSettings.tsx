@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Edit2, Trash2, Loader2, X, RefreshCw, UserPlus } from 'lucide-react';
+import { Users, Edit2, Trash2, Loader2, X, RefreshCw, UserPlus, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 interface User {
@@ -29,6 +29,8 @@ const UserSettings: React.FC = () => {
   const [editRole, setEditRole] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'An unknown error occurred.';
@@ -193,28 +195,35 @@ const UserSettings: React.FC = () => {
   };
 
   // DELETE USER
-  const handleDeleteUser = async (userId: string, targetName: string) => {
-    if (!confirm(`Permanently delete the user profile for "${targetName}"?`)) return;
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    const targetUser = userToDelete;
+    setDeletingUser(true);
     setError(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.id === userId) {
+      if (user && user.id === targetUser.user_id) {
         throw new Error('Cannot delete your own active administrator account.');
       }
 
       const { error: deleteError } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', userId);
+        .eq('id', targetUser.user_id);
 
       if (deleteError) throw deleteError;
 
+      setUsers(currentUsers => currentUsers.filter(item => item.user_id !== targetUser.user_id));
+      setUserToDelete(null);
       showSuccess('Account profile removed successfully.');
-      fetchUsers();
     } catch (err: any) {
       console.error(err);
       setError(getErrorMessage(err));
+      setUserToDelete(null);
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -321,7 +330,7 @@ const UserSettings: React.FC = () => {
                         </button>
                         <button 
                           className="btn btn-sm delete-action-button"
-                          onClick={() => handleDeleteUser(u.user_id, u.name)}
+                          onClick={() => setUserToDelete(u)}
                           style={{ padding: '0.45rem' }}
                           title="Delete User"
                         >
@@ -344,10 +353,10 @@ const UserSettings: React.FC = () => {
       {/* ── EDIT USER MODAL ── */}
       {editUser && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel">
+          <div className="modal-content solid-modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
             <div className="modal-header">
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit User Profile</h3>
-              <button className="modal-close" onClick={() => setEditUser(null)}><X size={20} /></button>
+              <h3 id="edit-user-title" style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit User Profile</h3>
+              <button type="button" className="modal-close" onClick={() => setEditUser(null)} disabled={updating} aria-label="Close edit user dialog"><X size={20} /></button>
             </div>
             
             <form onSubmit={handleUpdateUser}>
@@ -388,6 +397,38 @@ const UserSettings: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {userToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+            <div className="modal-header">
+              <h3 id="delete-user-title" className="delete-confirm-title">
+                <AlertTriangle size={18} /> Delete User
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setUserToDelete(null)}
+                disabled={deletingUser}
+                aria-label="Close delete confirmation"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="delete-confirm-message">
+              Permanently delete the account for <strong>{userToDelete.name}</strong> ({userToDelete.username})? This cannot be undone.
+            </p>
+            <div className="delete-confirm-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setUserToDelete(null)} disabled={deletingUser}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleDeleteUser} disabled={deletingUser}>
+                {deletingUser ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
