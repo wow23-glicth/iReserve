@@ -171,7 +171,7 @@ function App() {
       case 'products':
         return <Inventory />;
       case 'sales':
-        return <Sales />;
+        return <Sales role={session.role} />;
       case 'reservations':
         return <Reservations />;
       case 'analytics':

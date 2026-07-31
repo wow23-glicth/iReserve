@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Coins, Search, ShoppingBag, Download, ArrowUpRight } from 'lucide-react';
+import { Loader2, Coins, Search, ShoppingBag, Download, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 
@@ -21,7 +21,11 @@ interface SaleRecord {
   total_amount: number;
 }
 
-const Sales: React.FC = () => {
+interface SalesProps {
+  role: string;
+}
+
+const Sales: React.FC<SalesProps> = ({ role }) => {
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +36,8 @@ const Sales: React.FC = () => {
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [submitting, setSubmitting] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState<SaleRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,6 +164,33 @@ const Sales: React.FC = () => {
       setError(err.message || 'Failed to record sale.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteSale = async () => {
+    if (!saleToDelete) return;
+
+    setDeleting(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const { data: deletedRows, error: deleteError } = await supabase
+        .from('sales')
+        .delete()
+        .eq('sale_id', saleToDelete.sale_id)
+        .select('sale_id');
+
+      if (deleteError) throw deleteError;
+      if (!deletedRows?.length) throw new Error('This sale could not be deleted. Administrator access is required.');
+
+      setSales(currentSales => currentSales.filter(sale => sale.sale_id !== saleToDelete.sale_id));
+      setSaleToDelete(null);
+      showSuccess('Sale deleted successfully.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete sale.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -298,6 +331,7 @@ const Sales: React.FC = () => {
                   <th>Product Purchased</th>
                   <th>Quantity</th>
                   <th style={{ textAlign: 'center' }}>Total Paid</th>
+                  {role === 'Admin' && <th style={{ textAlign: 'center' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -312,6 +346,26 @@ const Sales: React.FC = () => {
                     <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
                       ₱{sale.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
+                    {role === 'Admin' && (
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={() => setSaleToDelete(sale)}
+                          disabled={deleting}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.12)',
+                            color: 'var(--danger)',
+                            border: '1px solid rgba(239, 68, 68, 0.22)',
+                            padding: '0.45rem'
+                          }}
+                          title="Delete Sale"
+                          aria-label={`Delete sale for ${sale.customer_name}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -323,6 +377,38 @@ const Sales: React.FC = () => {
           </div>
         )}
       </div>
+
+      {saleToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel" style={{ maxWidth: '420px' }}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.05rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <AlertTriangle size={18} /> Delete Sale
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setSaleToDelete(null)}
+                disabled={deleting}
+                aria-label="Close delete confirmation"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.5rem', lineHeight: 1.6, fontSize: '0.92rem' }}>
+              Permanently delete the sale of <strong style={{ color: 'var(--text-primary)' }}>{saleToDelete.quantity} {saleToDelete.unit} of {saleToDelete.product_name}</strong> to <strong style={{ color: 'var(--text-primary)' }}>{saleToDelete.customer_name}</strong>? This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setSaleToDelete(null)} disabled={deleting}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-danger" onClick={handleDeleteSale} disabled={deleting}>
+                {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
