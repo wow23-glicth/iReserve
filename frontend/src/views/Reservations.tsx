@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock, AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 
@@ -40,6 +40,7 @@ const Reservations: React.FC = () => {
 
   // Loading states for individual row actions
   const [actionId, setActionId] = useState<number | null>(null);
+  const [reservationToDelete, setReservationToDelete] = useState<ReservationRecord | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -290,25 +291,31 @@ const Reservations: React.FC = () => {
   };
 
   // DELETE RESERVATION RECORD
-  const handleDelete = async (resId: number, prodId: number, qty: number, currentStatus: string) => {
-    if (!window.confirm('Are you sure you want to permanently delete this reservation record?')) return;
-    setActionId(resId); setError(null);
+  const handleDelete = async () => {
+    if (!reservationToDelete) return;
+
+    const reservation = reservationToDelete;
+    setActionId(reservation.reservation_id);
+    setError(null);
     try {
-      const { error: deleteErr } = await supabase.from('reservations').delete().eq('reservation_id', resId);
+      const { error: deleteErr } = await supabase.from('reservations').delete().eq('reservation_id', reservation.reservation_id);
       if (deleteErr) throw deleteErr;
 
       // If deleted while approved, release the reserved stock
-      if (currentStatus === 'Approved') {
-        const { data: prodData } = await supabase.from('products').select('reserved_stock').eq('product_id', prodId).single();
+      if (reservation.status === 'Approved') {
+        const { data: prodData } = await supabase.from('products').select('reserved_stock').eq('product_id', reservation.product_id).single();
         if (prodData) {
-          const newReserved = Math.max(0, prodData.reserved_stock - qty);
-          await supabase.from('products').update({ reserved_stock: newReserved }).eq('product_id', prodId);
+          const newReserved = Math.max(0, prodData.reserved_stock - reservation.quantity);
+          await supabase.from('products').update({ reserved_stock: newReserved }).eq('product_id', reservation.product_id);
         }
       }
 
+      setReservations(currentReservations => currentReservations.filter(item => item.reservation_id !== reservation.reservation_id));
+      setReservationToDelete(null);
       showSuccess('Reservation deleted.');
     } catch (err: any) {
       setError(err.message || 'Failed to delete reservation.');
+      setReservationToDelete(null);
     } finally {
       setActionId(null);
     }
@@ -573,7 +580,7 @@ const Reservations: React.FC = () => {
                         {/* Delete Action */}
                         <button
                           className="btn btn-sm"
-                          onClick={() => handleDelete(res.reservation_id, res.product_id, res.quantity, res.status)}
+                          onClick={() => setReservationToDelete(res)}
                           disabled={actionId !== null}
                           style={{
                             background: 'rgba(239, 68, 68, 0.12)',
@@ -598,6 +605,38 @@ const Reservations: React.FC = () => {
           </div>
         )}
       </div>
+
+      {reservationToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-reservation-title">
+            <div className="modal-header">
+              <h3 id="delete-reservation-title" className="delete-confirm-title">
+                <AlertTriangle size={18} /> Delete Reservation
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setReservationToDelete(null)}
+                disabled={actionId !== null}
+                aria-label="Close delete confirmation"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="delete-confirm-message">
+              Permanently delete <strong>{reservationToDelete.customer_name}'s reservation</strong> for <strong>{reservationToDelete.quantity} {reservationToDelete.unit} of {reservationToDelete.product_name}</strong>? This cannot be undone.
+            </p>
+            <div className="delete-confirm-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setReservationToDelete(null)} disabled={actionId !== null}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={actionId !== null}>
+                {actionId === reservationToDelete.reservation_id ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

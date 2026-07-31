@@ -672,13 +672,13 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(102, 117, 107, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(31, 41, 55, 0.48);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 1000;
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -716,6 +716,73 @@ h1, h2, h3, h4, h5, h6 {
 .modal-close:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.45);
+}
+
+.delete-confirm-modal {
+  position: relative;
+  isolation: isolate;
+  max-width: 440px;
+  padding: 2rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff 0%, #f1f5f2 100%);
+  border: 1px solid rgba(102, 117, 107, 0.2);
+  box-shadow: 0 28px 80px rgba(31, 41, 55, 0.3);
+}
+
+.delete-confirm-modal .modal-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(102, 117, 107, 0.14);
+}
+
+.delete-confirm-modal .modal-close {
+  flex-shrink: 0;
+  background: rgba(102, 117, 107, 0.08);
+}
+
+.delete-confirm-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--danger);
+  font-size: 1.1rem;
+}
+
+.delete-confirm-message {
+  margin: 0 0 1.75rem;
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.delete-confirm-message strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 1rem;
+  }
+
+  .delete-confirm-modal {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .delete-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .delete-confirm-actions .btn {
+    width: 100%;
+  }
 }
 
 /* Premium Login Page Layout */

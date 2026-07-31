@@ -380,9 +380,9 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
 
       {saleToDelete && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '420px' }}>
+          <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-sale-title">
             <div className="modal-header">
-              <h3 style={{ fontSize: '1.05rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h3 id="delete-sale-title" className="delete-confirm-title">
                 <AlertTriangle size={18} /> Delete Sale
               </h3>
               <button
@@ -395,10 +395,10 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                 <X size={20} />
               </button>
             </div>
-            <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.5rem', lineHeight: 1.6, fontSize: '0.92rem' }}>
-              Permanently delete the sale of <strong style={{ color: 'var(--text-primary)' }}>{saleToDelete.quantity} {saleToDelete.unit} of {saleToDelete.product_name}</strong> to <strong style={{ color: 'var(--text-primary)' }}>{saleToDelete.customer_name}</strong>? This cannot be undone.
+            <p className="delete-confirm-message">
+              Permanently delete the sale of <strong>{saleToDelete.quantity} {saleToDelete.unit} of {saleToDelete.product_name}</strong> to <strong>{saleToDelete.customer_name}</strong>? This cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div className="delete-confirm-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setSaleToDelete(null)} disabled={deleting}>
                 Cancel
               </button>
