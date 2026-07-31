@@ -359,17 +359,17 @@ const Inventory: React.FC = () => {
       {/* ── DELETE CONFIRM MODAL ── */}
       {deleteProduct && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }}>
+          <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-product-title">
             <div className="modal-header">
-              <h3 style={{ fontSize: '1.05rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h3 id="delete-product-title" className="delete-confirm-title">
                 <AlertTriangle size={18} /> Delete Product
               </h3>
-              <button className="modal-close" onClick={() => setDeleteProduct(null)}><X size={20} /></button>
+              <button type="button" className="modal-close" onClick={() => setDeleteProduct(null)} disabled={deleting} aria-label="Close delete confirmation"><X size={20} /></button>
             </div>
-            <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.5rem', lineHeight: 1.6, fontSize: '0.92rem' }}>
+            <p className="delete-confirm-message">
               Are you sure you want to permanently delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteProduct.product_name}"</strong>? This will remove the item from the registry.
             </p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div className="delete-confirm-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setDeleteProduct(null)} disabled={deleting}>Cancel</button>
               <button
                 type="button" className="btn btn-danger" onClick={handleConfirmDelete} disabled={deleting}
