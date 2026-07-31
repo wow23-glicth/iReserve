@@ -579,15 +579,10 @@ const Reservations: React.FC = () => {
 
                         {/* Delete Action */}
                         <button
-                          className="btn btn-sm"
+                          className="btn btn-sm delete-action-button"
                           onClick={() => setReservationToDelete(res)}
                           disabled={actionId !== null}
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.12)',
-                            color: 'var(--danger)',
-                            border: '1px solid rgba(239, 68, 68, 0.22)',
-                            padding: '0.45rem'
-                          }}
+                          style={{ padding: '0.45rem' }}
                           title="Delete Reservation Record"
                         >
                           <Trash2 size={13} />
@@ -630,7 +625,7 @@ const Reservations: React.FC = () => {
               <button type="button" className="btn btn-secondary" onClick={() => setReservationToDelete(null)} disabled={actionId !== null}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={actionId !== null}>
+              <button type="button" className="btn btn-primary" onClick={handleDelete} disabled={actionId !== null}>
                 {actionId === reservationToDelete.reservation_id ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>

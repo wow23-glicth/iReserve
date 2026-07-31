@@ -350,15 +350,10 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                       <td style={{ textAlign: 'center' }}>
                         <button
                           type="button"
-                          className="btn btn-sm"
+                          className="btn btn-sm delete-action-button"
                           onClick={() => setSaleToDelete(sale)}
                           disabled={deleting}
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.12)',
-                            color: 'var(--danger)',
-                            border: '1px solid rgba(239, 68, 68, 0.22)',
-                            padding: '0.45rem'
-                          }}
+                          style={{ padding: '0.45rem' }}
                           title="Delete Sale"
                           aria-label={`Delete sale for ${sale.customer_name}`}
                         >
@@ -402,7 +397,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               <button type="button" className="btn btn-secondary" onClick={() => setSaleToDelete(null)} disabled={deleting}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-danger" onClick={handleDeleteSale} disabled={deleting}>
+              <button type="button" className="btn btn-primary" onClick={handleDeleteSale} disabled={deleting}>
                 {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>

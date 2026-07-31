@@ -320,14 +320,9 @@ const UserSettings: React.FC = () => {
                           <Edit2 size={13} />
                         </button>
                         <button 
-                          className="btn btn-sm"
+                          className="btn btn-sm delete-action-button"
                           onClick={() => handleDeleteUser(u.user_id, u.name)}
-                          style={{ 
-                            background: 'rgba(239,68,68,0.12)', 
-                            color: 'var(--danger)', 
-                            border: '1px solid rgba(239,68,68,0.22)',
-                            padding: '0.45rem'
-                          }}
+                          style={{ padding: '0.45rem' }}
                           title="Delete User"
                         >
                           <Trash2 size={13} />

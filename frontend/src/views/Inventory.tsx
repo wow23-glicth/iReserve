@@ -294,14 +294,9 @@ const Inventory: React.FC = () => {
                           <Edit2 size={13} />
                         </button>
                         <button
-                          className="btn btn-sm"
+                          className="btn btn-sm delete-action-button"
                           onClick={() => setDeleteProduct(p)}
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.12)', 
-                            color: 'var(--danger)', 
-                            border: '1px solid rgba(239, 68, 68, 0.22)',
-                            padding: '0.45rem'
-                          }}
+                          style={{ padding: '0.45rem' }}
                           title="Delete Product"
                         >
                           <Trash2 size={13} />
@@ -323,10 +318,10 @@ const Inventory: React.FC = () => {
       {/* ── EDIT MODAL ── */}
       {editProduct && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel">
+          <div className="modal-content solid-modal" role="dialog" aria-modal="true" aria-labelledby="edit-product-title">
             <div className="modal-header">
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit Product</h3>
-              <button className="modal-close" onClick={() => setEditProduct(null)}><X size={20} /></button>
+              <h3 id="edit-product-title" style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit Product</h3>
+              <button type="button" className="modal-close" onClick={() => setEditProduct(null)} disabled={updating} aria-label="Close edit product dialog"><X size={20} /></button>
             </div>
             <form onSubmit={handleUpdateProduct}>
               <div className="form-group">
@@ -372,7 +367,7 @@ const Inventory: React.FC = () => {
             <div className="delete-confirm-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setDeleteProduct(null)} disabled={deleting}>Cancel</button>
               <button
-                type="button" className="btn btn-danger" onClick={handleConfirmDelete} disabled={deleting}
+                type="button" className="btn btn-primary" onClick={handleConfirmDelete} disabled={deleting}
               >
                 {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
