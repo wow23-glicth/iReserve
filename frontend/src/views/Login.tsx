@@ -95,7 +95,7 @@ const Login: React.FC<LoginProps> = () => {
             }}>
               <ShieldCheck size={14} style={{ color: 'var(--primary)' }} /> Authorized Access Only
             </span>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 700, color: 'var(--text-primary)' }}>Terminal Sign In</h2>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 700, color: 'var(--text-primary)' }}>Login</h2>
           </div>
 
           {error && (
@@ -170,7 +170,7 @@ const Login: React.FC<LoginProps> = () => {
                   <Loader2 className="animate-spin" size={18} /> Verifying Credentials...
                 </>
               ) : (
-                'Access Terminal'
+                'Login'
               )}
             </button>
           </form>
