@@ -133,7 +133,7 @@ const Login: React.FC<LoginProps> = () => {
             </div>
 
             <div className="form-group" style={{ marginBottom: '2rem' }}>
-              <label className="form-label" htmlFor="passcode">Access Passcode</label>
+              <label className="form-label" htmlFor="passcode">Password</label>
               <div style={{ position: 'relative' }}>
                 <span style={{ 
                   position: 'absolute', 
