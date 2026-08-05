@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Coins, Search, ShoppingBag, Download, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
+import { downloadCsv, type CsvValue } from '../utils/csv';
 
 interface Product {
   product_id: number;
@@ -239,27 +240,21 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Total Amount'];
-    const rows = filteredSales.map(s => [
-      s.sale_id,
-      new Date(s.sale_date).toLocaleDateString(),
-      `"${s.customer_name}"`,
-      `"${s.product_name} (${s.unit})"`,
-      s.quantity,
-      s.total_amount
-    ]);
-    // Grand total row so the printed report closes with its own bottom line
-    const totalRow = ['', '', '', 'TOTAL', filteredTotalQuantity, filteredTotalAmount.toFixed(2)];
+    const rows: CsvValue[][] = [
+      ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Total Amount'],
+      ...filteredSales.map(s => [
+        s.sale_id,
+        new Date(s.sale_date).toLocaleDateString(),
+        s.customer_name,
+        `${s.product_name} (${s.unit})`,
+        s.quantity,
+        s.total_amount.toFixed(2)
+      ]),
+      // Grand total row so the printed report closes with its own bottom line
+      ['', '', '', 'TOTAL', filteredTotalQuantity, filteredTotalAmount.toFixed(2)]
+    ];
 
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + [headers.join(','), ...rows.map(e => e.join(',')), totalRow.join(',')].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(`sales_report_${new Date().toISOString().slice(0, 10)}.csv`, rows);
     showSuccess('Exported CSV successfully!');
   };
 

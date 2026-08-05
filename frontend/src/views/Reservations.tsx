@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock, AlertTriangle, X, Lock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
+import { downloadCsv, type CsvValue } from '../utils/csv';
 
 interface Product {
   product_id: number;
@@ -114,24 +115,21 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
 
   // CSV Export Functionality
   const handleExportCSV = () => {
-    const headers = ['Reservation ID', 'Customer', 'Product', 'Quantity', 'Status', 'Date'];
-    const rows = filteredReservations.map(r => [
-      r.reservation_id,
-      `"${r.customer_name}"`,
-      `"${r.product_name} (${r.unit})"`,
-      r.quantity,
-      r.status,
-      new Date(r.reservation_date).toLocaleDateString()
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `reservations_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const totalQuantity = filteredReservations.reduce((acc, r) => acc + r.quantity, 0);
+    const rows: CsvValue[][] = [
+      ['Reservation ID', 'Customer', 'Product', 'Quantity', 'Status', 'Date'],
+      ...filteredReservations.map(r => [
+        r.reservation_id,
+        r.customer_name,
+        `${r.product_name} (${r.unit})`,
+        r.quantity,
+        r.status,
+        new Date(r.reservation_date).toLocaleDateString()
+      ]),
+      ['', '', 'TOTAL', totalQuantity, '', '']
+    ];
+
+    downloadCsv(`reservations_report_${new Date().toISOString().slice(0, 10)}.csv`, rows);
     showSuccess('Exported CSV successfully!');
   };
 
