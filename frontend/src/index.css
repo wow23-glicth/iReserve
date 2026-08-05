@@ -614,6 +614,15 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(255, 255, 255, 0.35);
 }
 
+/* Totals footer — reads as the report's bottom line */
+.custom-table tfoot td {
+  border-top: 2px solid var(--border-color);
+  border-bottom: none;
+  background: rgba(255, 255, 255, 0.4);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
 /* Badges */
 .badge {
   display: inline-flex;
@@ -1047,6 +1056,22 @@ h1, h2, h3, h4, h5, h6 {
   .users-table td:nth-of-type(2)::before { content: "Username / Email"; }
   .users-table td:nth-of-type(3)::before { content: "Access Role"; }
   .users-table td:nth-of-type(4)::before { content: "Action Controls"; }
+
+  /* 5. Totals footer — column labels don't apply, so give it its own */
+  .custom-table tfoot td::before { content: "" !important; }
+
+  /* Spacer cells (e.g. the Admin actions column) collapse instead of
+     leaving an empty 44px block in the stacked card */
+  .custom-table tfoot td:empty { display: none !important; }
+
+  .custom-table tfoot td:first-child {
+    padding-left: 1rem !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .sales-table tfoot td:nth-of-type(2)::before { content: "Total Quantity" !important; }
+  .sales-table tfoot td:nth-of-type(3)::before { content: "Total Amount" !important; }
 }
 
 /* Responsive Stat Card Grid System */

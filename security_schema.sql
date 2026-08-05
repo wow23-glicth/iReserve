@@ -146,7 +146,36 @@ create policy "Only admins can delete sales"
   );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 6. ENABLE REALTIME ON AUDIT LOG (optional, for live monitoring)
+-- 6. RESTRICT RESERVATION APPROVAL TO ADMINS AND MANAGERS
+--    Cashiers may create, claim, and cancel reservations, but only Admins and
+--    Managers can move one into 'Approved' (which commits reserved stock).
+-- ─────────────────────────────────────────────────────────────────────────────
+
+create or replace function public.enforce_reservation_approval_role()
+returns trigger as $$
+declare
+  caller_role text;
+begin
+  -- Only guard the transition into 'Approved'
+  if NEW.status = 'Approved' and (TG_OP = 'INSERT' or OLD.status is distinct from 'Approved') then
+    select role into caller_role from public.profiles where id = auth.uid();
+
+    if caller_role is null or caller_role not in ('Admin', 'Manager') then
+      raise exception 'Unauthorized: only Admins and Managers can approve reservations.';
+    end if;
+  end if;
+
+  return NEW;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists enforce_reservation_approval on public.reservations;
+create trigger enforce_reservation_approval
+  before insert or update on public.reservations
+  for each row execute procedure public.enforce_reservation_approval_role();
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 7. ENABLE REALTIME ON AUDIT LOG (optional, for live monitoring)
 -- ─────────────────────────────────────────────────────────────────────────────
 
 alter publication supabase_realtime add table public.audit_log;

@@ -204,8 +204,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       s.quantity,
       s.total_amount
     ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    // Grand total row so the printed report closes with its own bottom line
+    const totalRow = ['', '', '', 'TOTAL', filteredTotalQuantity, filteredTotalAmount.toFixed(2)];
+
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + [headers.join(','), ...rows.map(e => e.join(',')), totalRow.join(',')].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -223,6 +226,10 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   );
 
   const totalSalesRevenue = sales.reduce((acc, curr) => acc + curr.total_amount, 0);
+
+  // Totals for whatever is currently on screen / about to be exported
+  const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.quantity, 0);
+  const filteredTotalAmount = filteredSales.reduce((acc, s) => acc + s.total_amount, 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -364,6 +371,18 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={3} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    TOTAL{searchQuery ? ' (filtered)' : ''}
+                  </td>
+                  <td style={{ fontWeight: 700 }}>{filteredTotalQuantity}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                    ₱{filteredTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  {role === 'Admin' && <td />}
+                </tr>
+              </tfoot>
             </table>
           </div>
         ) : (

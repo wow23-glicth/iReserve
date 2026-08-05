@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock, AlertTriangle, X } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock, AlertTriangle, X, Lock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 
@@ -22,7 +22,17 @@ interface ReservationRecord {
   product_id: number;
 }
 
-const Reservations: React.FC = () => {
+interface ReservationsProps {
+  role: string;
+}
+
+// Approving a reservation commits stock, so it stays with the roles that own
+// that decision. Cashiers still handle the counter work (create, claim, cancel).
+const APPROVER_ROLES = ['Admin', 'Manager'];
+
+const Reservations: React.FC<ReservationsProps> = ({ role }) => {
+  const canApprove = APPROVER_ROLES.includes(role);
+
   const [reservations, setReservations] = useState<ReservationRecord[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,6 +205,10 @@ const Reservations: React.FC = () => {
 
   // APPROVE RESERVATION (deducts stock and transitions to Approved)
   const handleApprove = async (resId: number, prodId: number, qty: number) => {
+    if (!canApprove) {
+      setError('Only Admins and Managers can approve reservations.');
+      return;
+    }
     setActionId(resId); setError(null);
     try {
       // 1. Double check stock availability
@@ -532,15 +546,24 @@ const Reservations: React.FC = () => {
                         {/* Pending Actions */}
                         {res.status === 'Pending' && (
                           <>
-                            <button
-                              className="btn btn-success btn-sm"
-                              onClick={() => handleApprove(res.reservation_id, res.product_id, res.quantity)}
-                              disabled={actionId !== null}
-                              style={{ gap: '0.2rem', padding: '0.35rem 0.75rem' }}
-                              title="Approve Reservation"
-                            >
-                              {actionId === res.reservation_id ? <Loader2 className="animate-spin" size={12} /> : 'Approve'}
-                            </button>
+                            {canApprove ? (
+                              <button
+                                className="btn btn-success btn-sm"
+                                onClick={() => handleApprove(res.reservation_id, res.product_id, res.quantity)}
+                                disabled={actionId !== null}
+                                style={{ gap: '0.2rem', padding: '0.35rem 0.75rem' }}
+                                title="Approve Reservation"
+                              >
+                                {actionId === res.reservation_id ? <Loader2 className="animate-spin" size={12} /> : 'Approve'}
+                              </button>
+                            ) : (
+                              <span
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}
+                                title="Only Admins and Managers can approve reservations"
+                              >
+                                <Lock size={12} /> Awaiting approval
+                              </span>
+                            )}
                             <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => handleCancel(res.reservation_id, res.product_id, res.quantity, res.status)}

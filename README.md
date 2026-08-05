@@ -138,9 +138,11 @@ All tables use Supabase Row-Level Security. No unauthenticated user can read or 
 
 The frontend application enforces user access boundaries by restricting component rendering, page routing, and search command shortcuts based on the user's role:
 
-- **Cashier**: Can only view and access the Dashboard, Sales, Reservations, and Analytics modules. Restricted sections (Inventory and User Settings) are hidden from the navigation sidebar and the command palette (Ctrl+K). Any manual or programmatic navigation to restricted pages is intercepted and redirected back to the Dashboard.
-- **Manager**: Can view and access all sections except User Settings.
+- **Cashier**: Can only view and access the Dashboard, Sales, Reservations, and Analytics modules. Restricted sections (Inventory and User Settings) are hidden from the navigation sidebar and the command palette (Ctrl+K). Any manual or programmatic navigation to restricted pages is intercepted and redirected back to the Dashboard. Within Reservations, a Cashier cannot approve a request — the Approve button is replaced by an "Awaiting approval" indicator — but they can still create, claim, and cancel reservations.
+- **Manager**: Can view and access all sections except User Settings. Managers are approvers and can approve pending reservations.
 - **Admin**: Has unrestricted access to all modules, including user account management (User Settings).
+
+Reservation approval is additionally enforced in the database by the `enforce_reservation_approval` trigger (see `security_schema.sql`), so a Cashier cannot approve a reservation even by calling the API directly.
 
 ---
 
@@ -197,13 +199,14 @@ Handles transaction recording:
 - The system computes the total automatically based on unit price
 - Submitted sales deduct from the product's available stock in real time
 - Full sales history is shown in a filterable table with date-range search support
+- The transaction table ends with a TOTAL row (total quantity and total amount), and the CSV export carries the same TOTAL line so printed reports are self-balancing
 
 ### Reservations
 
 Manages the reservation workflow:
 - Create a reservation by selecting a product and customer with a quantity
 - Reserved stock is tracked separately from available stock to prevent double-allocation
-- Staff can update reservation status from Pending to Approved, Claimed, or Cancelled
+- Only Admins and Managers can move a reservation from Pending to Approved; Cashiers can claim or cancel
 - When a reservation is claimed, the corresponding stock is formally deducted
 - When a reservation is cancelled, the reserved stock is returned to available stock
 

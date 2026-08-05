@@ -173,7 +173,7 @@ function App() {
       case 'sales':
         return <Sales role={session.role} />;
       case 'reservations':
-        return <Reservations />;
+        return <Reservations role={session.role} />;
       case 'analytics':
         return <Analytics />;
       case 'users':
