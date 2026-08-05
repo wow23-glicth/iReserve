@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Coins, Search, ShoppingBag, Download, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Loader2, Coins, Search, ShoppingBag, Download, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 import { downloadCsv, type CsvValue } from '../utils/csv';
+import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
 
 interface Product {
   product_id: number;
@@ -44,6 +45,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const [showClearHistory, setShowClearHistory] = useState(false);
   const [clearConfirmText, setClearConfirmText] = useState('');
   const [clearing, setClearing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -260,6 +262,53 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     showSuccess(`Exported all ${sales.length} transaction${sales.length === 1 ? '' : 's'} with totals.`);
   };
 
+  // Excel export — same full ledger, but as a real workbook so the columns
+  // arrive wide enough to read instead of collapsing into '####'.
+  const handleExportExcel = async () => {
+    setExporting(true);
+    setError(null);
+
+    try {
+      const rows: SheetData = [
+        [
+          { value: 'Sale ID', fontWeight: 'bold' },
+          { value: 'Date', fontWeight: 'bold' },
+          { value: 'Customer', fontWeight: 'bold' },
+          { value: 'Product', fontWeight: 'bold' },
+          { value: 'Quantity', fontWeight: 'bold' },
+          { value: 'Total Amount', fontWeight: 'bold' }
+        ],
+        ...sales.map(s => [
+          { value: s.sale_id, type: Number },
+          { value: parseDateOnly(s.sale_date), type: Date, format: 'yyyy-mm-dd' },
+          { value: s.customer_name, type: String },
+          { value: `${s.product_name} (${s.unit})`, type: String },
+          { value: s.quantity, type: Number },
+          { value: s.total_amount, type: Number, format: '#,##0.00' }
+        ]),
+        [
+          null,
+          null,
+          null,
+          { value: 'TOTAL', fontWeight: 'bold' },
+          { value: totalSalesQuantity, type: Number, fontWeight: 'bold' },
+          { value: totalSalesRevenue, type: Number, format: '#,##0.00', fontWeight: 'bold' }
+        ]
+      ];
+
+      await downloadExcel(
+        `sales_report_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        [{ width: 10 }, { width: 14 }, { width: 22 }, { width: 30 }, { width: 11 }, { width: 16 }],
+        rows
+      );
+      showSuccess(`Exported all ${sales.length} transaction${sales.length === 1 ? '' : 's'} to Excel.`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export the Excel file.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Filter sales
   const filteredSales = sales.filter(s => 
     s.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -360,6 +409,16 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleExportExcel}
+            disabled={sales.length === 0 || exporting}
+            style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}
+            title="Export all transactions to Excel, sized to fit and with totals"
+          >
+            {exporting ? <Loader2 className="animate-spin" size={14} /> : <FileSpreadsheet size={14} />} Export Excel
+          </button>
+
           <button
             className="btn btn-secondary btn-sm"
             onClick={handleExportCSV}
