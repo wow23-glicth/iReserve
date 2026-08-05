@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Coins, Search, ShoppingBag, Download, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Loader2, Coins, Search, ShoppingBag, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
-import { downloadCsv, type CsvValue } from '../utils/csv';
 import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
 
 interface Product {
@@ -243,27 +242,6 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
 
   // The exported report always covers every transaction on record, never just
   // the rows matching the current search, so the file is a complete ledger.
-  const handleExportCSV = () => {
-    const rows: CsvValue[][] = [
-      ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Total Amount'],
-      ...sales.map(s => [
-        s.sale_id,
-        new Date(s.sale_date).toLocaleDateString(),
-        s.customer_name,
-        `${s.product_name} (${s.unit})`,
-        s.quantity,
-        s.total_amount.toFixed(2)
-      ]),
-      // Grand total row so the printed report closes with its own bottom line
-      ['', '', '', 'TOTAL', totalSalesQuantity, totalSalesRevenue.toFixed(2)]
-    ];
-
-    downloadCsv(`sales_report_${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    showSuccess(`Exported all ${sales.length} transaction${sales.length === 1 ? '' : 's'} with totals.`);
-  };
-
-  // Excel export — same full ledger, but as a real workbook so the columns
-  // arrive wide enough to read instead of collapsing into '####'.
   const handleExportExcel = async () => {
     setExporting(true);
     setError(null);
@@ -315,7 +293,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     s.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Whole-ledger totals — shown on the stat card and written to the CSV export
+  // Whole-ledger totals — shown on the stat card and written to the Excel export
   const totalSalesRevenue = sales.reduce((acc, curr) => acc + curr.total_amount, 0);
   const totalSalesQuantity = sales.reduce((acc, s) => acc + s.quantity, 0);
 
@@ -417,16 +395,6 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
             title="Export all transactions to Excel, sized to fit and with totals"
           >
             {exporting ? <Loader2 className="animate-spin" size={14} /> : <FileSpreadsheet size={14} />} Export Excel
-          </button>
-
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={handleExportCSV}
-            disabled={sales.length === 0}
-            style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}
-            title="Export all transactions with totals (ignores the search filter)"
-          >
-            <Download size={14} /> Export CSV
           </button>
 
           {role === 'Admin' && (
