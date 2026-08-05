@@ -188,7 +188,8 @@ Allows staff to manage the product catalog:
 - Edit product details inline
 - Adjust stock quantities with increment and decrement controls
 - Delete products when they are no longer carried
-- Download the complete inventory list as an Excel (.xlsx) export with sized columns and stock totals (Admins and Managers)
+- Two summary cards head the page: Total Inventory Value (all stock valued at selling price) and Products Listed with total units on hand
+- Download the complete inventory list as an Excel (.xlsx) export with sized columns, a per-product Stock Value column, and totals that match the cards (Admins and Managers)
 
 ### Sales
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, FileSpreadsheet, Coins, Package } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { downloadExcel, type SheetData } from '../utils/excel';
 
@@ -153,7 +153,8 @@ const Inventory: React.FC = () => {
           { value: 'Price (PHP)', fontWeight: 'bold' },
           { value: 'Total Stock', fontWeight: 'bold' },
           { value: 'Reserved Stock', fontWeight: 'bold' },
-          { value: 'Available Stock', fontWeight: 'bold' }
+          { value: 'Available Stock', fontWeight: 'bold' },
+          { value: 'Stock Value (PHP)', fontWeight: 'bold' }
         ],
         ...products.map(p => [
           { value: p.product_id, type: Number },
@@ -162,10 +163,12 @@ const Inventory: React.FC = () => {
           { value: p.price, type: Number, format: '#,##0.00' },
           { value: p.stock, type: Number },
           { value: p.reserved_stock, type: Number },
-          { value: p.available, type: Number }
+          { value: p.available, type: Number },
+          { value: p.price * p.stock, type: Number, format: '#,##0.00' }
         ]),
-        // Only the stock columns are summed — a total of unit prices would be
-        // a meaningless number sitting under a Price heading.
+        // Unit prices are deliberately not summed — a total of prices under a
+        // Price heading would be a meaningless figure. Stock Value is summed
+        // instead, and matches the Total Inventory Value card on screen.
         [
           null,
           { value: 'TOTAL', fontWeight: 'bold' },
@@ -173,13 +176,14 @@ const Inventory: React.FC = () => {
           null,
           { value: products.reduce((acc, p) => acc + p.stock, 0), type: Number, fontWeight: 'bold' },
           { value: products.reduce((acc, p) => acc + p.reserved_stock, 0), type: Number, fontWeight: 'bold' },
-          { value: products.reduce((acc, p) => acc + p.available, 0), type: Number, fontWeight: 'bold' }
+          { value: products.reduce((acc, p) => acc + p.available, 0), type: Number, fontWeight: 'bold' },
+          { value: totalInventoryValue, type: Number, format: '#,##0.00', fontWeight: 'bold' }
         ]
       ];
 
       await downloadExcel(
         `PJP_Inventory_Export_${new Date().toISOString().slice(0, 10)}.xlsx`,
-        [{ width: 12 }, { width: 30 }, { width: 13 }, { width: 14 }, { width: 13 }, { width: 15 }, { width: 16 }],
+        [{ width: 12 }, { width: 30 }, { width: 13 }, { width: 14 }, { width: 13 }, { width: 15 }, { width: 16 }, { width: 18 }],
         rows
       );
     } catch (err: any) {
@@ -189,15 +193,54 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredProducts = products.filter(p =>
+    p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.product_id.toString().includes(searchQuery)
   );
+
+  // Inventory valuation — what the stock on hand is worth at selling price.
+  // Uses total stock, not available, so reserved units are still counted as
+  // goods the store owns until they are actually claimed.
+  const totalInventoryValue = products.reduce((acc, p) => acc + p.price * p.stock, 0);
+  const totalUnits = products.reduce((acc, p) => acc + p.stock, 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
       {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
+
+      {/* ── Inventory Valuation Cards ── */}
+      <div className="stats-grid">
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+              Total Inventory Value
+            </p>
+            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              ₱{totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h2>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All stock at selling price</span>
+          </div>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
+            <Coins size={20} />
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+              Products Listed
+            </p>
+            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{products.length}</h2>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {totalUnits.toLocaleString()} unit{totalUnits === 1 ? '' : 's'} on hand
+            </span>
+          </div>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
+            <Package size={20} />
+          </div>
+        </div>
+      </div>
 
       {/* ── ADD PRODUCT — Premium inline layout ── */}
       <div className="glass-panel" style={{ padding: '2rem' }}>
