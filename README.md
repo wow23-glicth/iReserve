@@ -188,7 +188,7 @@ Allows staff to manage the product catalog:
 - Edit product details inline
 - Adjust stock quantities with increment and decrement controls
 - Delete products when they are no longer carried
-- Download the complete inventory list as a CSV export file (Admins and Managers)
+- Download the complete inventory list as an Excel (.xlsx) export with sized columns and stock totals (Admins and Managers)
 
 ### Sales
 

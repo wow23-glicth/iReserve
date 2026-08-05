@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, Download } from 'lucide-react';
+import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { downloadExcel, type SheetData } from '../utils/excel';
 
 interface Product {
   product_id: number;
@@ -20,6 +21,7 @@ const Inventory: React.FC = () => {
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   // Add form
   const [addName, setAddName] = useState('');
@@ -139,28 +141,52 @@ const Inventory: React.FC = () => {
     } finally { setDeleting(false); }
   };
 
-  const handleDownloadCSV = () => {
-    const headers = ['Product ID', 'Product Name', 'Unit Type', 'Price (PHP)', 'Total Stock', 'Reserved Stock', 'Available Stock'];
-    const csvRows = [
-      headers.join(','),
-      ...products.map(p => [
-        p.product_id,
-        `"${p.product_name.replace(/"/g, '""')}"`,
-        `"${p.unit.replace(/"/g, '""')}"`,
-        p.price.toFixed(2),
-        p.stock,
-        p.reserved_stock,
-        p.available
-      ].join(','))
-    ];
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `PJP_Inventory_Export_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadExcel = async () => {
+    setExporting(true);
+
+    try {
+      const rows: SheetData = [
+        [
+          { value: 'Product ID', fontWeight: 'bold' },
+          { value: 'Product Name', fontWeight: 'bold' },
+          { value: 'Unit Type', fontWeight: 'bold' },
+          { value: 'Price (PHP)', fontWeight: 'bold' },
+          { value: 'Total Stock', fontWeight: 'bold' },
+          { value: 'Reserved Stock', fontWeight: 'bold' },
+          { value: 'Available Stock', fontWeight: 'bold' }
+        ],
+        ...products.map(p => [
+          { value: p.product_id, type: Number },
+          { value: p.product_name, type: String },
+          { value: p.unit, type: String },
+          { value: p.price, type: Number, format: '#,##0.00' },
+          { value: p.stock, type: Number },
+          { value: p.reserved_stock, type: Number },
+          { value: p.available, type: Number }
+        ]),
+        // Only the stock columns are summed — a total of unit prices would be
+        // a meaningless number sitting under a Price heading.
+        [
+          null,
+          { value: 'TOTAL', fontWeight: 'bold' },
+          null,
+          null,
+          { value: products.reduce((acc, p) => acc + p.stock, 0), type: Number, fontWeight: 'bold' },
+          { value: products.reduce((acc, p) => acc + p.reserved_stock, 0), type: Number, fontWeight: 'bold' },
+          { value: products.reduce((acc, p) => acc + p.available, 0), type: Number, fontWeight: 'bold' }
+        ]
+      ];
+
+      await downloadExcel(
+        `PJP_Inventory_Export_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        [{ width: 12 }, { width: 30 }, { width: 13 }, { width: 14 }, { width: 13 }, { width: 15 }, { width: 16 }],
+        rows
+      );
+    } catch (err: any) {
+      setError(err.message || 'Failed to export the Excel file.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const filteredProducts = products.filter(p => 
@@ -233,13 +259,15 @@ const Inventory: React.FC = () => {
         </div>
 
         {products.length > 0 && (
-          <button 
+          <button
             type="button"
-            onClick={handleDownloadCSV}
-            className="btn btn-secondary"
+            onClick={handleDownloadExcel}
+            disabled={exporting}
+            className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '42px' }}
+            title="Export the full inventory to Excel, sized to fit"
           >
-            <Download size={15} /> Export CSV
+            {exporting ? <Loader2 className="animate-spin" size={15} /> : <FileSpreadsheet size={15} />} Export Excel
           </button>
         )}
       </div>

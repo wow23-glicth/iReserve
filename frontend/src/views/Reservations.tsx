@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, Download, ArrowUpRight, Clock, AlertTriangle, X, Lock } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, FileSpreadsheet, ArrowUpRight, Clock, AlertTriangle, X, Lock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
-import { downloadCsv, type CsvValue } from '../utils/csv';
+import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
 
 interface Product {
   product_id: number;
@@ -52,6 +52,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
   // Loading states for individual row actions
   const [actionId, setActionId] = useState<number | null>(null);
   const [reservationToDelete, setReservationToDelete] = useState<ReservationRecord | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -113,24 +114,51 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
-  // CSV Export Functionality
-  const handleExportCSV = () => {
-    const totalQuantity = filteredReservations.reduce((acc, r) => acc + r.quantity, 0);
-    const rows: CsvValue[][] = [
-      ['Reservation ID', 'Customer', 'Product', 'Quantity', 'Status', 'Date'],
-      ...filteredReservations.map(r => [
-        r.reservation_id,
-        r.customer_name,
-        `${r.product_name} (${r.unit})`,
-        r.quantity,
-        r.status,
-        new Date(r.reservation_date).toLocaleDateString()
-      ]),
-      ['', '', 'TOTAL', totalQuantity, '', '']
-    ];
+  // Excel Export — a real workbook, so the columns arrive wide enough to read
+  const handleExportExcel = async () => {
+    setExporting(true);
+    setError(null);
 
-    downloadCsv(`reservations_report_${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    showSuccess('Exported CSV successfully!');
+    try {
+      const totalQuantity = filteredReservations.reduce((acc, r) => acc + r.quantity, 0);
+      const rows: SheetData = [
+        [
+          { value: 'Reservation ID', fontWeight: 'bold' },
+          { value: 'Customer', fontWeight: 'bold' },
+          { value: 'Product', fontWeight: 'bold' },
+          { value: 'Quantity', fontWeight: 'bold' },
+          { value: 'Status', fontWeight: 'bold' },
+          { value: 'Date', fontWeight: 'bold' }
+        ],
+        ...filteredReservations.map(r => [
+          { value: r.reservation_id, type: Number },
+          { value: r.customer_name, type: String },
+          { value: `${r.product_name} (${r.unit})`, type: String },
+          { value: r.quantity, type: Number },
+          { value: r.status, type: String },
+          { value: parseDateOnly(r.reservation_date), type: Date, format: 'yyyy-mm-dd' }
+        ]),
+        [
+          null,
+          null,
+          { value: 'TOTAL', fontWeight: 'bold' },
+          { value: totalQuantity, type: Number, fontWeight: 'bold' },
+          null,
+          null
+        ]
+      ];
+
+      await downloadExcel(
+        `reservations_report_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        [{ width: 15 }, { width: 22 }, { width: 30 }, { width: 11 }, { width: 13 }, { width: 14 }],
+        rows
+      );
+      showSuccess(`Exported ${filteredReservations.length} reservation${filteredReservations.length === 1 ? '' : 's'} to Excel.`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to export the Excel file.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // CREATE RESERVATION
@@ -492,8 +520,14 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
             </select>
           </div>
 
-          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}>
-            <Download size={14} /> Export CSV
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleExportExcel}
+            disabled={filteredReservations.length === 0 || exporting}
+            style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}
+            title="Export the listed reservations to Excel, sized to fit"
+          >
+            {exporting ? <Loader2 className="animate-spin" size={14} /> : <FileSpreadsheet size={14} />} Export Excel
           </button>
         </div>
       </div>
