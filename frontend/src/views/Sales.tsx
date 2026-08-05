@@ -239,10 +239,12 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     setClearConfirmText('');
   };
 
+  // The exported report always covers every transaction on record, never just
+  // the rows matching the current search, so the file is a complete ledger.
   const handleExportCSV = () => {
     const rows: CsvValue[][] = [
       ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Total Amount'],
-      ...filteredSales.map(s => [
+      ...sales.map(s => [
         s.sale_id,
         new Date(s.sale_date).toLocaleDateString(),
         s.customer_name,
@@ -251,11 +253,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         s.total_amount.toFixed(2)
       ]),
       // Grand total row so the printed report closes with its own bottom line
-      ['', '', '', 'TOTAL', filteredTotalQuantity, filteredTotalAmount.toFixed(2)]
+      ['', '', '', 'TOTAL', totalSalesQuantity, totalSalesRevenue.toFixed(2)]
     ];
 
     downloadCsv(`sales_report_${new Date().toISOString().slice(0, 10)}.csv`, rows);
-    showSuccess('Exported CSV successfully!');
+    showSuccess(`Exported all ${sales.length} transaction${sales.length === 1 ? '' : 's'} with totals.`);
   };
 
   // Filter sales
@@ -264,9 +266,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     s.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Whole-ledger totals — shown on the stat card and written to the CSV export
   const totalSalesRevenue = sales.reduce((acc, curr) => acc + curr.total_amount, 0);
+  const totalSalesQuantity = sales.reduce((acc, s) => acc + s.quantity, 0);
 
-  // Totals for whatever is currently on screen / about to be exported
+  // Totals for the rows currently on screen, which the table footer reports
   const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.quantity, 0);
   const filteredTotalAmount = filteredSales.reduce((acc, s) => acc + s.total_amount, 0);
 
@@ -356,7 +360,13 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleExportCSV}
+            disabled={sales.length === 0}
+            style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}
+            title="Export all transactions with totals (ignores the search filter)"
+          >
             <Download size={14} /> Export CSV
           </button>
 
