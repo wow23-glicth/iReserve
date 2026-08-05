@@ -200,6 +200,7 @@ Handles transaction recording:
 - Submitted sales deduct from the product's available stock in real time
 - Full sales history is shown in a filterable table with date-range search support
 - The transaction table ends with a TOTAL row (total quantity and total amount), and the CSV export carries the same TOTAL line so printed reports are self-balancing
+- Admins can delete a single sale, or clear the entire sales history with the Delete All History action. Clearing requires typing `DELETE` to confirm and is irreversible; product stock levels are not restored, since this purges records rather than reversing transactions. The action is hidden from non-Admins and additionally blocked by the "Only admins can delete sales" RLS policy
 
 ### Reservations
 

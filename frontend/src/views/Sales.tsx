@@ -39,6 +39,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const [saleToDelete, setSaleToDelete] = useState<SaleRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Clearing the whole ledger is irreversible, so it is typed-to-confirm
+  const [showClearHistory, setShowClearHistory] = useState(false);
+  const [clearConfirmText, setClearConfirmText] = useState('');
+  const [clearing, setClearing] = useState(false);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -194,6 +199,45 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     }
   };
 
+  // DELETE ALL SALES HISTORY — wipes the ledger, Admin only.
+  // Stock is deliberately left untouched: this purges records, it does not
+  // reverse the transactions (same behaviour as deleting a single sale).
+  const handleClearHistory = async () => {
+    if (role !== 'Admin') {
+      setError('Only Admins can delete the sales history.');
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const { data: deletedRows, error: deleteError } = await supabase
+        .from('sales')
+        .delete()
+        .gt('sale_id', 0)
+        .select('sale_id');
+
+      if (deleteError) throw deleteError;
+      if (!deletedRows?.length) throw new Error('No records were deleted. Administrator access is required.');
+
+      setSales([]);
+      setShowClearHistory(false);
+      setClearConfirmText('');
+      showSuccess(`Deleted all ${deletedRows.length} sales record${deletedRows.length === 1 ? '' : 's'}.`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete sales history.');
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const closeClearHistory = () => {
+    setShowClearHistory(false);
+    setClearConfirmText('');
+  };
+
   const handleExportCSV = () => {
     const headers = ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Total Amount'];
     const rows = filteredSales.map(s => [
@@ -316,9 +360,23 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
         </div>
 
-        <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}>
-          <Download size={14} /> Export CSV
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV} style={{ gap: '0.4rem', height: '38px', borderRadius: '16px' }}>
+            <Download size={14} /> Export CSV
+          </button>
+
+          {role === 'Admin' && (
+            <button
+              className="btn btn-sm danger-outline-button"
+              onClick={() => setShowClearHistory(true)}
+              disabled={sales.length === 0 || clearing}
+              style={{ gap: '0.4rem', height: '38px', borderRadius: '16px', padding: '0 0.9rem' }}
+              title={sales.length === 0 ? 'No sales history to delete' : 'Delete all sales history'}
+            >
+              <Trash2 size={14} /> Delete All History
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Recent Transactions Table ── */}
@@ -391,6 +449,60 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           </div>
         )}
       </div>
+
+      {showClearHistory && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="clear-history-title">
+            <div className="modal-header">
+              <h3 id="clear-history-title" className="delete-confirm-title">
+                <AlertTriangle size={18} /> Delete All Sales History
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={closeClearHistory}
+                disabled={clearing}
+                aria-label="Close delete history confirmation"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="delete-confirm-message">
+              This permanently deletes <strong>all {sales.length} sales record{sales.length === 1 ? '' : 's'}</strong>, worth{' '}
+              <strong>₱{totalSalesRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> in
+              logged revenue. Product stock levels are not restored. This cannot be undone.
+            </p>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="clear-history-confirm">
+                Type <strong>DELETE</strong> to confirm
+              </label>
+              <input
+                id="clear-history-confirm"
+                type="text"
+                className="form-input"
+                value={clearConfirmText}
+                onChange={(e) => setClearConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                disabled={clearing}
+              />
+            </div>
+            <div className="delete-confirm-actions">
+              <button type="button" className="btn btn-secondary" onClick={closeClearHistory} disabled={clearing}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleClearHistory}
+                disabled={clearing || clearConfirmText !== 'DELETE'}
+              >
+                {clearing ? <Loader2 className="animate-spin" size={16} /> : 'Delete Everything'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {saleToDelete && (
         <div className="modal-overlay">
