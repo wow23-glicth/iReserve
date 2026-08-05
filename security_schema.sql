@@ -23,6 +23,9 @@ create table if not exists public.audit_log (
 -- Enable RLS — authenticated users can read audit logs but CANNOT write to them
 alter table public.audit_log enable row level security;
 
+-- Postgres has no "create policy if not exists", so every policy below is
+-- dropped first. This keeps the whole script safe to re-run.
+drop policy if exists "Authenticated users can read audit logs" on public.audit_log;
 create policy "Authenticated users can read audit logs"
   on public.audit_log for select
   using (auth.role() = 'authenticated');
@@ -104,19 +107,23 @@ create trigger audit_profiles
 drop policy if exists "Allow all staff to manage products" on public.products;
 
 -- Re-add scoped policies
+drop policy if exists "Staff can read and insert products" on public.products;
 create policy "Staff can read and insert products"
   on public.products for select
   using (auth.role() = 'authenticated');
 
+drop policy if exists "Staff can insert products" on public.products;
 create policy "Staff can insert products"
   on public.products for insert
   with check (auth.role() = 'authenticated');
 
+drop policy if exists "Staff can update products" on public.products;
 create policy "Staff can update products"
   on public.products for update
   using (auth.role() = 'authenticated');
 
 -- Only admins can delete products
+drop policy if exists "Only admins can delete products" on public.products;
 create policy "Only admins can delete products"
   on public.products for delete
   using (
@@ -131,14 +138,17 @@ create policy "Only admins can delete products"
 
 drop policy if exists "Allow access to sales for all staff" on public.sales;
 
+drop policy if exists "Staff can read and insert sales" on public.sales;
 create policy "Staff can read and insert sales"
   on public.sales for select
   using (auth.role() = 'authenticated');
 
+drop policy if exists "Staff can insert sales" on public.sales;
 create policy "Staff can insert sales"
   on public.sales for insert
   with check (auth.role() = 'authenticated');
 
+drop policy if exists "Only admins can delete sales" on public.sales;
 create policy "Only admins can delete sales"
   on public.sales for delete
   using (
@@ -178,4 +188,15 @@ create trigger enforce_reservation_approval
 -- 7. ENABLE REALTIME ON AUDIT LOG (optional, for live monitoring)
 -- ─────────────────────────────────────────────────────────────────────────────
 
-alter publication supabase_realtime add table public.audit_log;
+-- Guarded: re-adding a table already in the publication raises 42710
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'audit_log'
+  ) then
+    alter publication supabase_realtime add table public.audit_log;
+  end if;
+end $$;
