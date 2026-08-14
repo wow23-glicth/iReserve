@@ -22,6 +22,15 @@ interface SaleRecord {
   total_amount: number;
 }
 
+interface CartItem {
+  product_id: number;
+  product_name: string;
+  unit: string;
+  price: number;
+  quantity: number;
+  availableStock: number;
+}
+
 interface SalesProps {
   role: string;
 }
@@ -45,6 +54,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const [clearConfirmText, setClearConfirmText] = useState('');
   const [clearing, setClearing] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Cart & Search combobox states
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,16 +122,72 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!productId) {
+      setError('Please select a product from the search list.');
+      return;
+    }
+    const qty = parseInt(quantity);
+    if (isNaN(qty) || qty <= 0) {
+      setError('Please enter a valid quantity.');
+      return;
+    }
+    const prod = products.find(p => p.product_id === parseInt(productId));
+    if (!prod) {
+      setError('Selected product not found.');
+      return;
+    }
+
+    // Check if product is already in cart
+    const existingIndex = cart.findIndex(item => item.product_id === prod.product_id);
+    const existingQty = existingIndex > -1 ? cart[existingIndex].quantity : 0;
+    
+    // Check stock availability
+    if (prod.available < existingQty + qty) {
+      setError(`Cannot add. Only ${prod.available} ${prod.unit} available in stock, and you already have ${existingQty} in the cart.`);
+      return;
+    }
+
+    if (existingIndex > -1) {
+      const updatedCart = [...cart];
+      updatedCart[existingIndex].quantity += qty;
+      setCart(updatedCart);
+    } else {
+      setCart([...cart, {
+        product_id: prod.product_id,
+        product_name: prod.product_name,
+        unit: prod.unit,
+        price: prod.price,
+        quantity: qty,
+        availableStock: prod.available
+      }]);
+    }
+
+    // Reset selector
+    setProductId('');
+    setProductSearch('');
+    setQuantity('1');
+    setError(null);
+  };
+
   const handleRecordSale = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true); setError(null); setSuccessMsg(null);
-    const targetProductId = parseInt(productId);
-    const qtyVal = parseInt(quantity);
+    if (cart.length === 0) {
+      setError('Please add at least one product to the sale.');
+      return;
+    }
     const trimmedCustomer = customerName.trim();
+    if (!trimmedCustomer) {
+      setError('Customer name is required.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setSuccessMsg(null);
 
     try {
-      if (!trimmedCustomer || !targetProductId || qtyVal <= 0) throw new Error('All fields are required.');
-
       // Encrypt PII before storing — lookup uses encrypted value
       const encryptedName = await encryptField(trimmedCustomer);
       let customerId: number;
@@ -144,28 +214,56 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         customerId = existingCustomer.customer_id;
       }
 
-      // Check stock
-      const { data: product, error: prodErr } = await supabase.from('products')
-        .select('stock, reserved_stock, price').eq('product_id', targetProductId).single();
-      if (prodErr || !product) throw new Error('Product not found.');
-      const available = product.stock - product.reserved_stock;
-      if (available < qtyVal) throw new Error(`Only ${available} units available.`);
+      // Re-verify stock for all cart items in database to avoid race conditions
+      const productIds = cart.map(item => item.product_id);
+      const { data: dbProducts, error: dbProdErr } = await supabase
+        .from('products')
+        .select('product_id, stock, reserved_stock, price')
+        .in('product_id', productIds);
+      
+      if (dbProdErr) throw dbProdErr;
 
-      const totalAmount = parseFloat(product.price) * qtyVal;
+      for (const item of cart) {
+        const dbProd = dbProducts?.find(p => p.product_id === item.product_id);
+        if (!dbProd) {
+          throw new Error(`Product "${item.product_name}" not found in database.`);
+        }
+        const available = dbProd.stock - dbProd.reserved_stock;
+        if (available < item.quantity) {
+          throw new Error(`Insufficient stock for "${item.product_name}". Only ${available} units available.`);
+        }
+      }
+
       const saleDate = new Date().toISOString().split('T')[0];
 
-      const { error: saleErr } = await supabase.from('sales').insert({
-        product_id: targetProductId, customer_id: customerId,
-        quantity: qtyVal, sale_date: saleDate, total_amount: totalAmount
-      });
+      // Prepare batch sale inserts
+      const salesInserts = cart.map(item => ({
+        product_id: item.product_id,
+        customer_id: customerId,
+        quantity: item.quantity,
+        sale_date: saleDate,
+        total_amount: item.price * item.quantity
+      }));
+
+      // Insert all sales
+      const { error: saleErr } = await supabase.from('sales').insert(salesInserts);
       if (saleErr) throw saleErr;
 
-      const { error: stockErr } = await supabase.from('products')
-        .update({ stock: product.stock - qtyVal }).eq('product_id', targetProductId);
-      if (stockErr) throw stockErr;
+      // Update product stock levels in parallel
+      const stockUpdates = cart.map(async (item) => {
+        const dbProd = dbProducts!.find(p => p.product_id === item.product_id)!;
+        const { error: stockErr } = await supabase
+          .from('products')
+          .update({ stock: dbProd.stock - item.quantity })
+          .eq('product_id', item.product_id);
+        if (stockErr) throw stockErr;
+      });
+
+      await Promise.all(stockUpdates);
 
       showSuccess('Sale recorded successfully.');
-      setCustomerName(''); setProductId(''); setQuantity('1');
+      setCustomerName('');
+      setCart([]);
       fetchData();
     } catch (err: any) {
       setError(err.message || 'Failed to record sale.');
@@ -301,6 +399,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.quantity, 0);
   const filteredTotalAmount = filteredSales.reduce((acc, s) => acc + s.total_amount, 0);
 
+  // Filter products for searchable dropdown
+  const filteredProducts = products.filter(p =>
+    p.product_name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
@@ -340,33 +443,218 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       {/* ── Record New Sale — compact inline form ── */}
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Record New Sale</h3>
-        <form onSubmit={handleRecordSale} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Customer Name</label>
-            <input
-              type="text" className="form-input" placeholder="Name"
-              value={customerName} onChange={(e) => setCustomerName(e.target.value)} required
-            />
-          </div>
-          
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Select Product</label>
-            <select className="form-select" value={productId} onChange={(e) => setProductId(e.target.value)} required>
-              <option value="">Choose item...</option>
-              {products.map(p => (
-                <option key={p.product_id} value={p.product_id} disabled={p.available <= 0}>
-                  {p.product_name} – {p.available > 0 ? `${p.available} ${p.unit} left` : 'Out of Stock'}
-                </option>
-              ))}
-            </select>
+        <form onSubmit={handleRecordSale} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Customer Name</label>
+              <input
+                type="text" className="form-input" placeholder="Name"
+                value={customerName} onChange={(e) => setCustomerName(e.target.value)} required
+              />
+            </div>
+            <div style={{ display: 'none' }} />
+            <div style={{ display: 'none' }} />
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Quantity</label>
-            <input type="number" className="form-input" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+            <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
+              <label className="form-label">Search & Select Product</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Type to search..."
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setProductId('');
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  style={{ paddingRight: '2.2rem' }}
+                />
+                {productId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProductId('');
+                      setProductSearch('');
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0
+                    }}
+                    title="Clear selection"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+              {showDropdown && (
+                <>
+                  <div 
+                    onClick={() => setShowDropdown(false)} 
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 40,
+                      background: 'transparent'
+                    }}
+                  />
+                  <div
+                    className="glass-panel"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: '0.5rem',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      zIndex: 50,
+                      background: 'rgba(255, 255, 255, 0.98)',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      padding: '0.4rem 0'
+                    }}
+                  >
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map(p => (
+                        <button
+                          key={p.product_id}
+                          type="button"
+                          onClick={() => {
+                            setProductId(p.product_id.toString());
+                            setProductSearch(p.product_name);
+                            setShowDropdown(false);
+                          }}
+                          disabled={p.available <= 0}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '0.6rem 1rem',
+                            background: 'transparent',
+                            border: 'none',
+                            color: p.available > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+                            cursor: p.available > 0 ? 'pointer' : 'not-allowed',
+                            fontSize: '0.9rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            transition: 'background 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (p.available > 0) {
+                              e.currentTarget.style.background = 'rgba(102, 117, 107, 0.08)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          <span style={{ fontWeight: 500 }}>{p.product_name}</span>
+                          <span style={{ fontSize: '0.78rem', color: p.available > 0 ? 'var(--primary)' : 'var(--danger)' }}>
+                            {p.available > 0 ? `${p.available} ${p.unit} left` : 'Out of Stock'}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div style={{ padding: '0.8rem 1rem', color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center' }}>
+                        No matching products
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Quantity</label>
+              <input type="number" className="form-input" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+            </div>
+
+            <button type="button" onClick={handleAddToCart} className="btn btn-secondary" style={{ height: '46px' }}>
+              Add to List
+            </button>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '46px' }}>
+          {/* Cart Table */}
+          {cart.length > 0 && (
+            <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Selected Products</h4>
+              <div className="table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                <table className="custom-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Unit Price</th>
+                      <th>Quantity</th>
+                      <th>Subtotal</th>
+                      <th style={{ width: '50px', textAlign: 'center' }}>Remove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cart.map((item, idx) => (
+                      <tr key={`${item.product_id}-${idx}`}>
+                        <td>{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
+                        <td>₱{item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td style={{ fontWeight: 600 }}>{item.quantity}</td>
+                        <td style={{ fontWeight: 600 }}>₱{(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="btn btn-sm delete-action-button"
+                            onClick={() => {
+                              setCart(cart.filter((_, i) => i !== idx));
+                            }}
+                            style={{ padding: '0.35rem' }}
+                            title="Remove item"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem 0.25rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Items: </span>
+                  <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, marginRight: '0.5rem' }}>Grand Total:</span>
+                  <strong style={{ fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 800 }}>
+                    ₱{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={submitting || cart.length === 0} 
+            style={{ height: '46px', alignSelf: 'flex-end', minWidth: '180px', marginTop: '0.5rem' }}
+          >
             {submitting ? <Loader2 className="animate-spin" size={18} /> : 'Process Sale'}
           </button>
         </form>
