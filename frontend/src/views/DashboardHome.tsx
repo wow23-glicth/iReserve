@@ -111,9 +111,9 @@ const DashboardHome: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && (
-        <div className="ui-alert ui-alert-error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
+        <div className="ui-alert ui-alert-error dashboard-error-alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
           <span>{error}</span>
           <button className="btn btn-secondary btn-sm" onClick={fetchDashboardData} style={{ gap: '0.4rem', marginLeft: 'auto' }}>
             <RefreshCw size={14} /> Retry
@@ -194,7 +194,8 @@ const DashboardHome: React.FC = () => {
         ) : lowStock.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {lowStock.map((item) => (
-              <div 
+              <div
+                className="low-stock-item"
                 key={item.product_id} 
                 style={{
                   display: 'flex',
@@ -213,7 +214,7 @@ const DashboardHome: React.FC = () => {
                   <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{item.product_name}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>Product ID: #{item.product_id}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="low-stock-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     Total: <strong style={{ color: 'var(--text-primary)' }}>{item.stock}</strong> | Reserved: <strong style={{ color: 'var(--text-primary)' }}>{item.reserved_stock}</strong>
                   </span>

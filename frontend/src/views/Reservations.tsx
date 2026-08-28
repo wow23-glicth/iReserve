@@ -459,7 +459,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
       {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
 
@@ -521,10 +521,10 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
       </div>
 
       {/* ── Create Reservation — Premium layout ── */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Create New Reservation</h3>
         <form onSubmit={handleCreateReservation} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+          <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Customer Name</label>
               <input
@@ -537,7 +537,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
             <div style={{ display: 'none' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+          <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
               <label className="form-label">Search & Select Product</label>
               <div style={{ position: 'relative' }}>
@@ -681,8 +681,8 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
           {cart.length > 0 && (
             <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Selected Products to Reserve</h4>
-              <div className="table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                <table className="custom-table" style={{ width: '100%' }}>
+              <div className="table-container cart-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                <table className="custom-table cart-table" style={{ width: '100%' }}>
                   <thead>
                     <tr>
                       <th>Product</th>
@@ -693,9 +693,9 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                   <tbody>
                     {cart.map((item, idx) => (
                       <tr key={`${item.product_id}-${idx}`}>
-                        <td>{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
-                        <td style={{ fontWeight: 600 }}>{item.quantity}</td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Product">{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
+                        <td data-label="Quantity" style={{ fontWeight: 600 }}>{item.quantity}</td>
+                        <td data-label="Remove" style={{ textAlign: 'center' }}>
                           <button
                             type="button"
                             className="btn btn-sm delete-action-button"
@@ -736,9 +736,9 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
       </div>
 
       {/* ── Table Toolbar Controls: Search, Filter, Export ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+      <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px', maxWidth: '380px' }}>
+        <div className="toolbar-search" style={{ position: 'relative', flex: 1, minWidth: '220px', maxWidth: '380px' }}>
           <input
             type="text"
             className="form-input"
@@ -751,8 +751,8 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
         </div>
 
         {/* Filter & Export */}
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.45)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '0.2rem 0.75rem' }}>
+        <div className="toolbar-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="toolbar-filter" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.45)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '0.2rem 0.75rem' }}>
             <Filter size={14} style={{ color: 'var(--text-secondary)' }} />
             <select
               value={statusFilter}
@@ -788,7 +788,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
       </div>
 
       {/* ── Reservations Table ── */}
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
+      <div className="glass-panel responsive-panel table-panel" style={{ padding: '1.5rem' }}>
         {loading && reservations.length === 0 ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
             <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
@@ -809,13 +809,13 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
               <tbody>
                 {filteredReservations.map((res) => (
                   <tr key={res.reservation_id}>
-                    <td><strong style={{ color: 'var(--text-primary)' }}>{res.customer_name}</strong></td>
-                    <td>{res.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({res.unit})</span></td>
-                    <td style={{ fontWeight: 600 }}>{res.quantity}</td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <td data-label="Customer Name"><strong style={{ color: 'var(--text-primary)' }}>{res.customer_name}</strong></td>
+                    <td data-label="Reserved Item">{res.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({res.unit})</span></td>
+                    <td data-label="Quantity" style={{ fontWeight: 600 }}>{res.quantity}</td>
+                    <td data-label="Date Requested" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                       {new Date(res.reservation_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`badge ${
                         res.status === 'Approved' 
                           ? 'badge-success' 
@@ -828,8 +828,8 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                         {res.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                    <td data-label="Actions" style={{ textAlign: 'center' }}>
+                      <div className="table-row-actions" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                         {/* Pending Actions */}
                         {res.status === 'Pending' && (
                           <>

@@ -405,7 +405,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
       {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
 
@@ -441,10 +441,10 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       </div>
 
       {/* ── Record New Sale — compact inline form ── */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Record New Sale</h3>
         <form onSubmit={handleRecordSale} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+          <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Customer Name</label>
               <input
@@ -456,7 +456,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
             <div style={{ display: 'none' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
+          <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
               <label className="form-label">Search & Select Product</label>
               <div style={{ position: 'relative' }}>
@@ -596,8 +596,8 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           {cart.length > 0 && (
             <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Selected Products</h4>
-              <div className="table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                <table className="custom-table" style={{ width: '100%' }}>
+              <div className="table-container cart-table-container" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                <table className="custom-table cart-table" style={{ width: '100%' }}>
                   <thead>
                     <tr>
                       <th>Product</th>
@@ -610,11 +610,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                   <tbody>
                     {cart.map((item, idx) => (
                       <tr key={`${item.product_id}-${idx}`}>
-                        <td>{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
-                        <td>₱{item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                        <td style={{ fontWeight: 600 }}>{item.quantity}</td>
-                        <td style={{ fontWeight: 600 }}>₱{(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td data-label="Product">{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
+                        <td data-label="Unit Price">₱{item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td data-label="Quantity" style={{ fontWeight: 600 }}>{item.quantity}</td>
+                        <td data-label="Subtotal" style={{ fontWeight: 600 }}>₱{(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td data-label="Remove" style={{ textAlign: 'center' }}>
                           <button
                             type="button"
                             className="btn btn-sm delete-action-button"
@@ -632,7 +632,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                   </tbody>
                 </table>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem 0.25rem' }}>
+              <div className="cart-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem 0.25rem' }}>
                 <div>
                   <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Items: </span>
                   <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
@@ -661,8 +661,8 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       </div>
 
       {/* ── Toolbar: Search & Export ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '380px' }}>
+      <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="toolbar-search" style={{ position: 'relative', flex: 1, maxWidth: '380px' }}>
           <input
             type="text"
             className="form-input"
@@ -674,7 +674,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="toolbar-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             className="btn btn-primary btn-sm"
             onClick={handleExportExcel}
@@ -700,7 +700,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       </div>
 
       {/* ── Recent Transactions Table ── */}
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
+      <div className="glass-panel responsive-panel table-panel" style={{ padding: '1.5rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Transaction Logs</h3>
         {loading && sales.length === 0 ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
@@ -722,17 +722,17 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               <tbody>
                 {filteredSales.map((sale) => (
                   <tr key={sale.sale_id}>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <td data-label="Date" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                       {new Date(sale.sale_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
-                    <td><strong style={{ color: 'var(--text-primary)' }}>{sale.customer_name}</strong></td>
-                    <td>{sale.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({sale.unit})</span></td>
-                    <td style={{ fontWeight: 600 }}>{sale.quantity}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                    <td data-label="Customer Name"><strong style={{ color: 'var(--text-primary)' }}>{sale.customer_name}</strong></td>
+                    <td data-label="Product Details">{sale.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({sale.unit})</span></td>
+                    <td data-label="Quantity" style={{ fontWeight: 600 }}>{sale.quantity}</td>
+                    <td data-label="Total Paid" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
                       ₱{sale.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     {role === 'Admin' && (
-                      <td style={{ textAlign: 'center' }}>
+                      <td data-label="Actions" style={{ textAlign: 'center' }}>
                         <button
                           type="button"
                           className="btn btn-sm delete-action-button"
@@ -751,11 +751,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  <td data-label="Summary" colSpan={3} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>
                     TOTAL{searchQuery ? ' (filtered)' : ''}
                   </td>
-                  <td style={{ fontWeight: 700 }}>{filteredTotalQuantity}</td>
-                  <td style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                  <td data-label="Total Quantity" style={{ fontWeight: 700 }}>{filteredTotalQuantity}</td>
+                  <td data-label="Total Amount" style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
                     ₱{filteredTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   {role === 'Admin' && <td />}

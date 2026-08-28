@@ -236,7 +236,7 @@ const Analytics: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: 'bottom' as const,
         labels: {
           color: '#1F2937', // dark text color for readability in light mode
           font: { family: 'Inter', size: 12, weight: 500 },
@@ -256,7 +256,7 @@ const Analytics: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
 
       {/* 3 Stats Cards Row */}
@@ -317,11 +317,11 @@ const Analytics: React.FC = () => {
       {/* Modern Dashboard Charts Grid */}
       <div className="content-grid-2" style={{ gap: '1.5rem' }}>
         {/* Left Side: Revenue Trend */}
-        <div className="glass-panel" style={{ padding: '2rem' }}>
+        <div className="glass-panel chart-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
             Revenue Trend (Last 7 Days)
           </h3>
-          <div style={{ height: '320px', position: 'relative' }}>
+          <div className="chart-frame" style={{ height: '320px', position: 'relative' }}>
             {data.chartData.length > 0 ? (
               <Line data={lineConfig} options={lineOptions} />
             ) : (
@@ -333,11 +333,11 @@ const Analytics: React.FC = () => {
         </div>
 
         {/* Right Side: Product Share Doughnut */}
-        <div className="glass-panel" style={{ padding: '2rem' }}>
+        <div className="glass-panel chart-panel" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
             Sales Breakdown by Product
           </h3>
-          <div style={{ height: '320px', position: 'relative' }}>
+          <div className="chart-frame" style={{ height: '320px', position: 'relative' }}>
             {data.productShares.length > 0 ? (
               <Doughnut data={doughnutConfig} options={doughnutOptions} />
             ) : (

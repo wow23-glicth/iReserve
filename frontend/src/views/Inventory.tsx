@@ -205,7 +205,7 @@ const Inventory: React.FC = () => {
   const totalUnits = products.reduce((acc, p) => acc + p.stock, 0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
       {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
 
@@ -243,7 +243,7 @@ const Inventory: React.FC = () => {
       </div>
 
       {/* ── ADD PRODUCT — Premium inline layout ── */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Add New Product</h3>
         <form onSubmit={handleAddProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -288,8 +288,8 @@ const Inventory: React.FC = () => {
       </div>
 
       {/* ── Toolbar: Search ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '380px' }}>
+      <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <div className="toolbar-search" style={{ position: 'relative', flex: 1, maxWidth: '380px' }}>
           <input
             type="text"
             className="form-input"
@@ -316,7 +316,7 @@ const Inventory: React.FC = () => {
       </div>
 
       {/* ── PRODUCTS TABLE ── */}
-      <div className="glass-panel" style={{ padding: '1.5rem' }}>
+      <div className="glass-panel responsive-panel table-panel" style={{ padding: '1.5rem' }}>
         {loading && products.length === 0 ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
             <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
@@ -337,15 +337,15 @@ const Inventory: React.FC = () => {
               <tbody>
                 {filteredProducts.map((p) => (
                   <tr key={p.product_id}>
-                    <td style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>#{p.product_id}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <td data-label="Product ID" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>#{p.product_id}</td>
+                    <td data-label="Product Details">
+                      <div className="table-value-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                         <strong style={{ color: 'var(--text-primary)' }}>{p.product_name}</strong>
                         <span className="badge badge-info">{p.unit}</span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 600 }}>₱{p.price.toFixed(2)}</td>
-                    <td>
+                    <td data-label="Unit Price" style={{ fontWeight: 600 }}>₱{p.price.toFixed(2)}</td>
+                    <td data-label="Available Stock">
                       <span style={{ 
                         color: p.available <= 5 ? 'var(--danger)' : 'var(--text-primary)', 
                         fontWeight: p.available <= 5 ? 700 : 500 
@@ -353,9 +353,9 @@ const Inventory: React.FC = () => {
                         {p.available}
                       </span>
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{p.reserved_stock}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                    <td data-label="Reserved Qty" style={{ color: 'var(--text-secondary)' }}>{p.reserved_stock}</td>
+                    <td data-label="Actions" style={{ textAlign: 'center' }}>
+                      <div className="table-row-actions" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm" 
                           onClick={() => handleOpenEdit(p)}

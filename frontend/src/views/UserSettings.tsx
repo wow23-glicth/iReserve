@@ -228,12 +228,12 @@ const UserSettings: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error && <div className="ui-alert ui-alert-error">{error}</div>}
       {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
 
       {/* ── ADD USER — Premium Form Grid ── */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
           <UserPlus size={18} style={{ color: 'var(--primary)' }} />
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Provision Staff Account</h3>
@@ -279,8 +279,8 @@ const UserSettings: React.FC = () => {
       </div>
 
       {/* ── ACCOUNTS LIST TABLE ── */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="glass-panel responsive-panel table-panel" style={{ padding: '2rem' }}>
+        <div className="section-heading-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Users size={18} style={{ color: 'var(--text-secondary)' }} />
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Staff Registry</h3>
@@ -308,9 +308,9 @@ const UserSettings: React.FC = () => {
               <tbody>
                 {users.map((u) => (
                   <tr key={u.user_id}>
-                    <td><strong style={{ color: 'var(--text-primary)' }}>{u.name}</strong></td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{u.username}</td>
-                    <td>
+                    <td data-label="Full Name"><strong style={{ color: 'var(--text-primary)' }}>{u.name}</strong></td>
+                    <td data-label="Username / Email" style={{ color: 'var(--text-secondary)' }}>{u.username}</td>
+                    <td data-label="Access Role">
                       <span className={`badge ${
                         u.role === 'Admin' ? 'badge-danger' : 
                         u.role === 'Manager' ? 'badge-info' : 'badge-success'
@@ -318,8 +318,8 @@ const UserSettings: React.FC = () => {
                         {u.role}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                    <td data-label="Actions" style={{ textAlign: 'center' }}>
+                      <div className="table-row-actions" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button 
                           className="btn btn-secondary btn-sm" 
                           onClick={() => handleOpenEdit(u)}

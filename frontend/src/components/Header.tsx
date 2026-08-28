@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ page, userName, role, onToggleSidebar }
   return (
     <div className="page-header" style={{ position: 'relative' }}>
       {/* Left Side: Page Title + Mobile Hamburger */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button
           type="button"
           className="sidebar-hamburger"
@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ page, userName, role, onToggleSidebar }
         >
           <Menu size={18} />
         </button>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+        <h2 className="page-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
           {getPageTitle(page)}
         </h2>
       </div>
