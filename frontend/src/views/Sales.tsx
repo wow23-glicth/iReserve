@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Loader2, Coins, Search, ShoppingBag, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader2, Coins, Search, ShoppingBag, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, Printer, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
+import SalesReceipt from '../components/SalesReceipt';
+import { formatPeso, groupSaleLines, type SaleLineRecord, type SaleTransaction } from '../utils/sales';
 
 interface Product {
   product_id: number;
@@ -10,16 +12,6 @@ interface Product {
   unit: string;
   price: number;
   available: number;
-}
-
-interface SaleRecord {
-  sale_id: number;
-  customer_name: string;
-  product_name: string;
-  unit: string;
-  quantity: number;
-  sale_date: string;
-  total_amount: number;
 }
 
 interface CartItem {
@@ -36,7 +28,7 @@ interface SalesProps {
 }
 
 const Sales: React.FC<SalesProps> = ({ role }) => {
-  const [sales, setSales] = useState<SaleRecord[]>([]);
+  const [sales, setSales] = useState<SaleTransaction[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +38,9 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [submitting, setSubmitting] = useState(false);
-  const [saleToDelete, setSaleToDelete] = useState<SaleRecord | null>(null);
+  const submittingRef = useRef(false);
+  const [saleToDelete, setSaleToDelete] = useState<SaleTransaction | null>(null);
+  const [receiptToPrint, setReceiptToPrint] = useState<SaleTransaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Clearing the whole ledger is irreversible, so it is typed-to-confirm
@@ -74,18 +68,21 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       if (prodRes.error) throw prodRes.error;
 
       const rawSales = salesRes.data || [];
-      const decryptedSales = await Promise.all(
-        rawSales.map(async (row: any) => ({
-          sale_id: row.sale_id,
-          customer_name: await decryptField(row.customers?.name || 'Unknown'),
-          product_name: row.products?.product_name || 'Deleted Item',
-          unit: row.products?.unit || '',
-          quantity: parseInt(row.quantity),
-          sale_date: row.sale_date,
-          total_amount: parseFloat(row.total_amount)
-        }))
-      );
-      setSales(decryptedSales);
+       const decryptedSales: SaleLineRecord[] = await Promise.all(
+         rawSales.map(async (row: any) => ({
+           sale_id: row.sale_id,
+           transaction_id: row.transaction_id || null,
+           product_id: row.product_id,
+           customer_name: await decryptField(row.customers?.name || 'Unknown'),
+           product_name: row.products?.product_name || 'Deleted Item',
+           unit: row.products?.unit || '',
+           quantity: parseInt(row.quantity),
+           sale_date: row.sale_date,
+           created_at: row.created_at || `${row.sale_date}T00:00:00Z`,
+           total_amount: parseFloat(row.total_amount)
+         }))
+       );
+       setSales(groupSaleLines(decryptedSales));
 
       setProducts((prodRes.data || []).map((p: any) => ({
         product_id: p.product_id,
@@ -173,6 +170,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
 
   const handleRecordSale = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (cart.length === 0) {
       setError('Please add at least one product to the sale.');
       return;
@@ -183,11 +181,14 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       return;
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     setError(null);
     setSuccessMsg(null);
 
     try {
+      const submittedCart = cart.map(item => ({ ...item }));
+
       // Encrypt PII before storing — lookup uses encrypted value
       const encryptedName = await encryptField(trimmedCustomer);
       let customerId: number;
@@ -214,60 +215,51 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         customerId = existingCustomer.customer_id;
       }
 
-      // Re-verify stock for all cart items in database to avoid race conditions
-      const productIds = cart.map(item => item.product_id);
-      const { data: dbProducts, error: dbProdErr } = await supabase
-        .from('products')
-        .select('product_id, stock, reserved_stock, price')
-        .in('product_id', productIds);
-      
-      if (dbProdErr) throw dbProdErr;
-
-      for (const item of cart) {
-        const dbProd = dbProducts?.find(p => p.product_id === item.product_id);
-        if (!dbProd) {
-          throw new Error(`Product "${item.product_name}" not found in database.`);
-        }
-        const available = dbProd.stock - dbProd.reserved_stock;
-        if (available < item.quantity) {
-          throw new Error(`Insufficient stock for "${item.product_name}". Only ${available} units available.`);
-        }
-      }
-
-      const saleDate = new Date().toISOString().split('T')[0];
-
-      // Prepare batch sale inserts
-      const salesInserts = cart.map(item => ({
-        product_id: item.product_id,
-        customer_id: customerId,
-        quantity: item.quantity,
-        sale_date: saleDate,
-        total_amount: item.price * item.quantity
-      }));
-
-      // Insert all sales
-      const { error: saleErr } = await supabase.from('sales').insert(salesInserts);
-      if (saleErr) throw saleErr;
-
-      // Update product stock levels in parallel
-      const stockUpdates = cart.map(async (item) => {
-        const dbProd = dbProducts!.find(p => p.product_id === item.product_id)!;
-        const { error: stockErr } = await supabase
-          .from('products')
-          .update({ stock: dbProd.stock - item.quantity })
-          .eq('product_id', item.product_id);
-        if (stockErr) throw stockErr;
+      const transactionId = crypto.randomUUID();
+      const { data: recordedRows, error: saleError } = await supabase.rpc('record_sale_transaction', {
+        p_customer_id: customerId,
+        p_transaction_id: transactionId,
+        p_items: submittedCart.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity
+        }))
       });
 
-      await Promise.all(stockUpdates);
+      if (saleError) {
+        const migrationMissing = saleError.code === 'PGRST202' || saleError.message?.includes('record_sale_transaction');
+        if (migrationMissing) {
+          throw new Error('Sales transaction setup is not installed. Run sales_transaction_upgrade.sql in the Supabase SQL Editor, then try again.');
+        }
+        throw saleError;
+      }
 
-      showSuccess('Sale recorded successfully.');
+      const receiptLines: SaleLineRecord[] = (recordedRows || []).map((row: any) => {
+        const item = submittedCart.find(cartItem => cartItem.product_id === Number(row.product_id));
+        return {
+          sale_id: Number(row.sale_id),
+          transaction_id: row.transaction_id || transactionId,
+          product_id: Number(row.product_id),
+          customer_name: trimmedCustomer,
+          product_name: item?.product_name || 'Product',
+          unit: item?.unit || 'unit',
+          quantity: Number(row.quantity),
+          sale_date: row.sale_date,
+          created_at: row.created_at || new Date().toISOString(),
+          total_amount: Number(row.total_amount)
+        };
+      });
+      const recordedTransaction = groupSaleLines(receiptLines)[0];
+      if (!recordedTransaction) throw new Error('The sale was saved, but the receipt data could not be loaded. Check the transaction log before trying again.');
+
+      showSuccess('Sale recorded as one transaction. Receipt ready to print.');
       setCustomerName('');
       setCart([]);
-      fetchData();
+      setReceiptToPrint(recordedTransaction);
+      await fetchData();
     } catch (err: any) {
       setError(err.message || 'Failed to record sale.');
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -283,15 +275,19 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       const { data: deletedRows, error: deleteError } = await supabase
         .from('sales')
         .delete()
-        .eq('sale_id', saleToDelete.sale_id)
+        .in('sale_id', saleToDelete.sale_ids)
         .select('sale_id');
 
       if (deleteError) throw deleteError;
       if (!deletedRows?.length) throw new Error('This sale could not be deleted. Administrator access is required.');
 
-      setSales(currentSales => currentSales.filter(sale => sale.sale_id !== saleToDelete.sale_id));
+      if (deletedRows.length !== saleToDelete.sale_ids.length) {
+        throw new Error('Only part of this transaction was deleted. Refresh the records before making another change.');
+      }
+
+      setSales(currentSales => currentSales.filter(sale => sale.transaction_id !== saleToDelete.transaction_id));
       setSaleToDelete(null);
-      showSuccess('Sale deleted successfully.');
+      showSuccess('Sale transaction deleted successfully.');
     } catch (err: any) {
       setError(err.message || 'Failed to delete sale.');
     } finally {
@@ -322,10 +318,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
       if (deleteError) throw deleteError;
       if (!deletedRows?.length) throw new Error('No records were deleted. Administrator access is required.');
 
+      const transactionCount = sales.length;
       setSales([]);
       setShowClearHistory(false);
       setClearConfirmText('');
-      showSuccess(`Deleted all ${deletedRows.length} sales record${deletedRows.length === 1 ? '' : 's'}.`);
+      showSuccess(`Deleted all ${transactionCount} sale transaction${transactionCount === 1 ? '' : 's'}.`);
     } catch (err: any) {
       setError(err.message || 'Failed to delete sales history.');
     } finally {
@@ -347,19 +344,23 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     try {
       const rows: SheetData = [
         [
-          { value: 'Sale ID', fontWeight: 'bold' },
+          { value: 'Receipt Number', fontWeight: 'bold' },
           { value: 'Date', fontWeight: 'bold' },
           { value: 'Customer', fontWeight: 'bold' },
-          { value: 'Product', fontWeight: 'bold' },
-          { value: 'Quantity', fontWeight: 'bold' },
-          { value: 'Total Amount', fontWeight: 'bold' }
+          { value: 'Items', fontWeight: 'bold' },
+          { value: 'Total Quantity', fontWeight: 'bold' },
+          { value: 'Transaction Total', fontWeight: 'bold' }
         ],
         ...sales.map(s => [
-          { value: s.sale_id, type: Number },
+          { value: s.receipt_number, type: String },
           { value: parseDateOnly(s.sale_date), type: Date, format: 'yyyy-mm-dd' },
           { value: s.customer_name, type: String },
-          { value: `${s.product_name} (${s.unit})`, type: String },
-          { value: s.quantity, type: Number },
+          {
+            value: s.items.map(item => `${item.product_name} (${item.unit}) × ${item.quantity}`).join('; '),
+            type: String,
+            wrap: true
+          },
+          { value: s.total_quantity, type: Number },
           { value: s.total_amount, type: Number, format: '#,##0.00' }
         ]),
         [
@@ -374,7 +375,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
 
       await downloadExcel(
         `sales_report_${new Date().toISOString().slice(0, 10)}.xlsx`,
-        [{ width: 10 }, { width: 14 }, { width: 22 }, { width: 30 }, { width: 11 }, { width: 16 }],
+        [{ width: 26 }, { width: 14 }, { width: 22 }, { width: 48 }, { width: 14 }, { width: 18 }],
         rows
       );
       showSuccess(`Exported all ${sales.length} transaction${sales.length === 1 ? '' : 's'} to Excel.`);
@@ -388,15 +389,16 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   // Filter sales
   const filteredSales = sales.filter(s => 
     s.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.product_name.toLowerCase().includes(searchQuery.toLowerCase())
+    s.receipt_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.items.some(item => item.product_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Whole-ledger totals — shown on the stat card and written to the Excel export
   const totalSalesRevenue = sales.reduce((acc, curr) => acc + curr.total_amount, 0);
-  const totalSalesQuantity = sales.reduce((acc, s) => acc + s.quantity, 0);
+  const totalSalesQuantity = sales.reduce((acc, s) => acc + s.total_quantity, 0);
 
   // Totals for the rows currently on screen, which the table footer reports
-  const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.quantity, 0);
+  const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.total_quantity, 0);
   const filteredTotalAmount = filteredSales.reduce((acc, s) => acc + s.total_amount, 0);
 
   // Filter products for searchable dropdown
@@ -699,9 +701,12 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
         </div>
       </div>
 
-      {/* ── Recent Transactions Table ── */}
+      {/* ── Grouped Transactions Table ── */}
       <div className="glass-panel responsive-panel table-panel" style={{ padding: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Transaction Logs</h3>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>Sales Records</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+          Each row is one checkout and can be reopened as a printable receipt.
+        </p>
         {loading && sales.length === 0 ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
             <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
@@ -711,41 +716,64 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
             <table className="custom-table sales-table">
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Receipt</th>
                   <th>Customer</th>
-                  <th>Product Purchased</th>
-                  <th>Quantity</th>
+                  <th>Items Purchased</th>
+                  <th>Total Quantity</th>
                   <th style={{ textAlign: 'center' }}>Total Paid</th>
-                  {role === 'Admin' && <th style={{ textAlign: 'center' }}>Actions</th>}
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredSales.map((sale) => (
-                  <tr key={sale.sale_id}>
-                    <td data-label="Date" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      {new Date(sale.sale_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <tr key={sale.transaction_id}>
+                    <td data-label="Receipt" className="sales-receipt-reference">
+                      <strong>{sale.receipt_number}</strong>
+                      <span>
+                        {new Date(`${sale.sale_date}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
                     </td>
                     <td data-label="Customer Name"><strong style={{ color: 'var(--text-primary)' }}>{sale.customer_name}</strong></td>
-                    <td data-label="Product Details">{sale.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({sale.unit})</span></td>
-                    <td data-label="Quantity" style={{ fontWeight: 600 }}>{sale.quantity}</td>
-                    <td data-label="Total Paid" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
-                      ₱{sale.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <td data-label="Items Purchased">
+                      <ul className="sale-line-items">
+                        {sale.items.map(item => (
+                          <li key={item.sale_id}>
+                            <span>{item.product_name} <small>({item.unit})</small></span>
+                            <strong>×{item.quantity}</strong>
+                          </li>
+                        ))}
+                      </ul>
                     </td>
-                    {role === 'Admin' && (
-                      <td data-label="Actions" style={{ textAlign: 'center' }}>
+                    <td data-label="Total Quantity" style={{ fontWeight: 600 }}>{sale.total_quantity}</td>
+                    <td data-label="Total Paid" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                      {formatPeso(sale.total_amount)}
+                    </td>
+                    <td data-label="Actions" style={{ textAlign: 'center' }}>
+                      <div className="table-row-actions">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary receipt-action-button"
+                          onClick={() => setReceiptToPrint(sale)}
+                          title={`Open receipt ${sale.receipt_number}`}
+                          aria-label={`Open printable receipt ${sale.receipt_number}`}
+                        >
+                          <Printer size={14} /> Receipt
+                        </button>
+                        {role === 'Admin' && (
                         <button
                           type="button"
                           className="btn btn-sm delete-action-button"
                           onClick={() => setSaleToDelete(sale)}
                           disabled={deleting}
                           style={{ padding: '0.45rem' }}
-                          title="Delete Sale"
-                          aria-label={`Delete sale for ${sale.customer_name}`}
+                          title="Delete sale transaction"
+                          aria-label={`Delete sale transaction ${sale.receipt_number}`}
                         >
                           <Trash2 size={13} />
                         </button>
-                      </td>
-                    )}
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -758,14 +786,14 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                   <td data-label="Total Amount" style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
                     ₱{filteredTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  {role === 'Admin' && <td />}
+                  <td />
                 </tr>
               </tfoot>
             </table>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>No transaction logs match your criteria.</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>No sales records match your criteria.</p>
           </div>
         )}
       </div>
@@ -788,7 +816,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               </button>
             </div>
             <p className="delete-confirm-message">
-              This permanently deletes <strong>all {sales.length} sales record{sales.length === 1 ? '' : 's'}</strong>, worth{' '}
+              This permanently deletes <strong>all {sales.length} sale transaction{sales.length === 1 ? '' : 's'}</strong>, worth{' '}
               <strong>₱{totalSalesRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> in
               logged revenue. Product stock levels are not restored. This cannot be undone.
             </p>
@@ -829,7 +857,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-sale-title">
             <div className="modal-header">
               <h3 id="delete-sale-title" className="delete-confirm-title">
-                <AlertTriangle size={18} /> Delete Sale
+                <AlertTriangle size={18} /> Delete Sale Transaction
               </h3>
               <button
                 type="button"
@@ -842,7 +870,8 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               </button>
             </div>
             <p className="delete-confirm-message">
-              Permanently delete the sale of <strong>{saleToDelete.quantity} {saleToDelete.unit} of {saleToDelete.product_name}</strong> to <strong>{saleToDelete.customer_name}</strong>? This cannot be undone.
+              Permanently delete receipt <strong>{saleToDelete.receipt_number}</strong> for <strong>{saleToDelete.customer_name}</strong>,
+              including all {saleToDelete.items.length} line item{saleToDelete.items.length === 1 ? '' : 's'} worth <strong>{formatPeso(saleToDelete.total_amount)}</strong>? This cannot be undone.
             </p>
             <div className="delete-confirm-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setSaleToDelete(null)} disabled={deleting}>
@@ -854,6 +883,10 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {receiptToPrint && (
+        <SalesReceipt sale={receiptToPrint} onClose={() => setReceiptToPrint(null)} />
       )}
     </div>
   );

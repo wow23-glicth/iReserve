@@ -1,6 +1,8 @@
 -- iReserve Supabase Database Schema
 -- Paste this script into your Supabase SQL Editor and run it to set up tables and triggers.
 
+create extension if not exists pgcrypto;
+
 -- 1. Create Profiles Table (extends Supabase auth.users)
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
@@ -61,6 +63,7 @@ create policy "Allow access to customers for all staff" on public.customers
 -- 4. Create Sales Table
 create table public.sales (
   sale_id bigint generated always as identity primary key,
+  transaction_id uuid not null default gen_random_uuid(),
   product_id bigint references public.products(product_id) on delete cascade not null,
   customer_id bigint references public.customers(customer_id) on delete cascade not null,
   quantity integer not null check (quantity > 0),
@@ -75,6 +78,108 @@ alter table public.sales enable row level security;
 -- RLS Policies for Sales
 create policy "Allow access to sales for all staff" on public.sales
   for all using (auth.role() = 'authenticated');
+
+create index sales_transaction_id_idx on public.sales (transaction_id);
+
+-- Record all line items and deduct stock as one atomic checkout. Any validation
+-- failure rolls the entire sale back, so partial receipts cannot be created.
+create or replace function public.record_sale_transaction(
+  p_customer_id bigint,
+  p_transaction_id uuid,
+  p_items jsonb
+)
+returns setof public.sales
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_item record;
+  v_product public.products%rowtype;
+begin
+  if auth.role() is distinct from 'authenticated' then
+    raise exception using errcode = '42501', message = 'Authentication is required to record a sale.';
+  end if;
+
+  if p_customer_id is null or not exists (
+    select 1 from public.customers where customer_id = p_customer_id
+  ) then
+    raise exception using errcode = '23503', message = 'The selected customer does not exist.';
+  end if;
+
+  if p_transaction_id is null then
+    raise exception using errcode = '22023', message = 'A transaction ID is required.';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(p_transaction_id::text, 0));
+
+  if exists (select 1 from public.sales where transaction_id = p_transaction_id) then
+    raise exception using errcode = '23505', message = 'This sales transaction has already been recorded.';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception using errcode = '22023', message = 'At least one sales item is required.';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_to_recordset(p_items) as item(product_id bigint, quantity integer)
+    where item.product_id is null or item.quantity is null or item.quantity <= 0
+  ) then
+    raise exception using errcode = '22023', message = 'Every sales item needs a valid product and a quantity greater than zero.';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_to_recordset(p_items) as item(product_id bigint, quantity integer)
+    group by item.product_id
+    having count(*) > 1
+  ) then
+    raise exception using errcode = '22023', message = 'A product can only appear once in a sales transaction.';
+  end if;
+
+  for v_item in
+    select item.product_id, item.quantity
+    from jsonb_to_recordset(p_items) as item(product_id bigint, quantity integer)
+    order by item.product_id
+  loop
+    select product.* into v_product
+    from public.products as product
+    where product.product_id = v_item.product_id
+    for update;
+
+    if not found then
+      raise exception using errcode = 'P0002', message = format('Product %s was not found.', v_item.product_id);
+    end if;
+
+    if (v_product.stock - v_product.reserved_stock) < v_item.quantity then
+      raise exception using
+        errcode = '23514',
+        message = format(
+          'Insufficient stock for "%s". Only %s %s available.',
+          v_product.product_name,
+          greatest(v_product.stock - v_product.reserved_stock, 0),
+          v_product.unit
+        );
+    end if;
+
+    insert into public.sales (transaction_id, product_id, customer_id, quantity, sale_date, total_amount)
+    values (p_transaction_id, v_product.product_id, p_customer_id, v_item.quantity, current_date, v_product.price * v_item.quantity);
+
+    update public.products
+    set stock = stock - v_item.quantity
+    where product_id = v_product.product_id;
+  end loop;
+
+  return query
+    select sale.* from public.sales as sale
+    where sale.transaction_id = p_transaction_id
+    order by sale.sale_id;
+end;
+$$;
+
+revoke all on function public.record_sale_transaction(bigint, uuid, jsonb) from public;
+grant execute on function public.record_sale_transaction(bigint, uuid, jsonb) to authenticated;
 
 -- 5. Create Reservations Table
 create table public.reservations (
@@ -121,7 +226,6 @@ alter publication supabase_realtime add table public.reservations;
 alter publication supabase_realtime add table public.customers;
 
 -- 8. RPC Function to allow Admins/Owners to change passwords securely
-create extension if not exists pgcrypto;
 
 create or replace function public.update_user_password(user_uuid uuid, new_password text)
 returns void as $$
@@ -168,5 +272,3 @@ begin
   end if;
 end;
 $$ language plpgsql security definer;
-
-

@@ -97,11 +97,12 @@ Stores unique customer names used across sales and reservations.
 
 ### sales
 
-Records each individual sale transaction.
+Stores the immutable line items that belong to a grouped checkout transaction.
 
 | Column | Type | Description |
 |---|---|---|
 | sale_id | bigint | Auto-generated primary key |
+| transaction_id | uuid | Shared identifier for every line item in one checkout/receipt |
 | product_id | bigint | References products table |
 | customer_id | bigint | References customers table |
 | quantity | integer | Number of units sold |
@@ -194,15 +195,17 @@ Allows staff to manage the product catalog:
 ### Sales
 
 Handles transaction recording:
-- Select a product from the current inventory
+- Add one or several products from the current inventory to a checkout
 - Enter or select an existing customer name
-- Specify the quantity and sale date
-- The system computes the total automatically based on unit price
-- Submitted sales deduct from the product's available stock in real time
-- Full sales history is shown in a filterable table with date-range search support
+- Specify a quantity for each selected product
+- The system computes line subtotals and the checkout total automatically
+- The database records every checkout line and deducts all stock in one atomic operation; any failed validation rolls the entire checkout back
+- Sales Records shows one row per checkout, with all purchased items grouped under one receipt number
+- Staff can print the receipt immediately after checkout or reopen and reprint it later from Sales Records
+- Full sales history can be searched by customer, product, or receipt number
 - The transaction table ends with a TOTAL row (total quantity and total amount), and the Excel export carries the same TOTAL line so printed reports are self-balancing
 - Reports export as a real .xlsx workbook with sized columns, so dates and amounts never collapse into `####` the way they do in a CSV opened at default column width
-- Admins can delete a single sale, or clear the entire sales history with the Delete All History action. Clearing requires typing `DELETE` to confirm and is irreversible; product stock levels are not restored, since this purges records rather than reversing transactions. The action is hidden from non-Admins and additionally blocked by the "Only admins can delete sales" RLS policy
+- Admins can delete a whole sale transaction, or clear the entire sales history with the Delete All History action. Clearing requires typing `DELETE` to confirm and is irreversible; product stock levels are not restored, since this purges records rather than reversing transactions. Delete controls are hidden from non-Admins and additionally blocked by the "Only admins can delete sales" RLS policy
 
 ### Reservations
 
@@ -283,6 +286,8 @@ Open your Supabase project dashboard. Navigate to the SQL Editor and apply the f
 2. Paste the contents of `security_schema.sql` and run it to configure audit logs and tightened RLS policies.
 3. Paste the contents of `vault_setup.sql` and run it. This stores the AES-256-GCM encryption key securely in Supabase Vault and registers the `get_encryption_key()` RPC function.
 
+For a database created with an older version of iReserve, run `sales_transaction_upgrade.sql` once instead of rerunning `schema.sql`. The upgrade groups future multi-item checkouts under a shared transaction ID, backfills each historical sales row as a one-item legacy transaction, and installs the atomic sales RPC required by the current frontend.
+
 ### 3. Configure Environment Variables
 
 Inside the `frontend` directory, create a file named `.env.local`:
@@ -335,6 +340,7 @@ If you deploy this project to Vercel, configure the following settings in your V
 ```
 iReserve/
   schema.sql                   Database schema, triggers, and RPC functions
+  sales_transaction_upgrade.sql Existing-database upgrade for grouped sales and receipts
   README.md                    Project documentation
   frontend/
     index.html                 HTML entry point (sets page title and favicon)
@@ -348,6 +354,7 @@ iReserve/
       index.css                Complete custom design system and responsive styles
       components/
         Header.tsx             Top navigation bar with page title and mobile menu
+        SalesReceipt.tsx       Screen and print layout for grouped sale receipts
         Sidebar.tsx            Navigation sidebar with drawer behavior on mobile
       views/
         Login.tsx              Authentication screen
