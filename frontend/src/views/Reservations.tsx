@@ -4,6 +4,7 @@ import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
 import StatCard from '../components/StatCard';
 import ActionPanel from '../components/ActionPanel';
+import { availableStock } from '../utils/stock';
 import React, { useState, useEffect } from 'react';
 import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, FileSpreadsheet, Clock, AlertTriangle, X, Lock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
@@ -102,7 +103,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
         product_id: p.product_id,
         product_name: p.product_name,
         unit: p.unit,
-        available: p.stock - p.reserved_stock
+        available: availableStock(p.stock, p.reserved_stock)
       })).sort((a, b) => {
         const aOut = a.available <= 0;
         const bOut = b.available <= 0;

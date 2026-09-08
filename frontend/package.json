@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "qa:preview": "vite --config qa/vite.config.ts",
     "test:ui": "node qa/inspect.cjs",
-    "test:metrics": "node --test qa/metrics.test.ts"
+    "test:metrics": "node --test qa/metrics.test.ts",
+    "test:inventory": "node --test qa/inventory.test.ts",
+    "test:inventory-ui": "node qa/inventory.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",

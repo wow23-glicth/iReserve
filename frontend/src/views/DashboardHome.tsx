@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard';
 import RevenueChart from '../components/RevenueChart';
 import { revenueWeek, type RevenueRecord } from '../utils/analytics';
 import { formatPeso } from '../utils/sales';
+import { availableStock, stockQuantity, stockNeedsReview } from '../utils/stock';
 interface Product { product_id: number; product_name: string; stock: number; reserved_stock: number; }
 interface Sale extends RevenueRecord { sale_id: number; transaction_id: string | null; }
 export default function DashboardHome({ userName, role, onNavigate }: { userName: string; role: string; onNavigate: (page: string) => void }) {
@@ -33,7 +34,7 @@ export default function DashboardHome({ userName, role, onNavigate }: { userName
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
-  const lowStock = data.products.filter(p => p.stock - (p.reserved_stock || 0) <= 5).sort((a, b) => (a.stock - a.reserved_stock) - (b.stock - b.reserved_stock));
+  const lowStock = data.products.filter(p => availableStock(p.stock, p.reserved_stock) <= 5).sort((a, b) => availableStock(a.stock, a.reserved_stock) - availableStock(b.stock, b.reserved_stock));
   const points = revenueWeek(data.sales);
   const weekRevenue = points.reduce((sum, p) => sum + p.amount, 0);
   const transactions = new Set(data.sales.map(s => s.transaction_id || `legacy-${s.sale_id}`)).size;
@@ -62,7 +63,7 @@ export default function DashboardHome({ userName, role, onNavigate }: { userName
         <div className="panel-heading"><div className="heading-with-icon"><AlertTriangle size={18} /><h3>Low stock alerts</h3></div>{!error && <span className="count-badge">{lowStock.length}</span>}</div>
         <p className="panel-description">Products with 5 or fewer available units.</p>
         {loading ? <div className="loading-state"><Loader2 className="animate-spin" size={24} /></div> : error ? <div className="empty-state"><p>Stock information is unavailable.</p></div> : data.products.length === 0 ? <div className="empty-state"><Package size={34} /><h4>No products yet</h4><p>{canManageStock ? "Add your first product in Inventory to start tracking stock." : "Stock levels will appear when your team adds products."}</p></div> : lowStock.length ? <div className="stock-list">{lowStock.slice(0, 5).map(item => <div className="low-stock-item" key={item.product_id}>
-          <span className="product-icon"><Package size={19} /></span><div className="stock-product"><strong>{item.product_name}</strong><span>Product #{item.product_id} · {item.reserved_stock || 0} reserved</span></div><span className="badge badge-danger">{item.stock - (item.reserved_stock || 0)} left</span>
+          <span className="product-icon"><Package size={19} /></span><div className="stock-product"><strong>{item.product_name}</strong><span>Product #{item.product_id} · {stockQuantity(item.reserved_stock)} reserved</span>{stockNeedsReview(item.stock, item.reserved_stock) && <span className="stock-review">Stock needs review</span>}</div><span className="badge badge-danger">{availableStock(item.stock, item.reserved_stock)} left</span>
         </div>)}</div> : <div className="empty-state healthy-state"><CircleCheck size={34} /><h4>Stock is looking good</h4><p>All products have more than 5 available units.</p></div>}
         {canManageStock && <button className="text-button stock-link" onClick={() => onNavigate('products')}>View inventory <ArrowRight size={15} /></button>}
       </section>

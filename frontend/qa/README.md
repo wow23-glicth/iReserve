@@ -17,3 +17,7 @@ For browser verification, install Playwright in your development environment or 
 For the interaction suite, also start the normal application on port 4174 with `npm run dev -- --host 127.0.0.1 --port 4174`. The configuration-error check expects a checkout without Supabase environment credentials. Run `node qa/interactions.cjs` to verify keyboard navigation, pagination, exports, roles, and receipt print layout. Browser checks use fixtures; they do not prove live database writes or production deployment.
 
 The normal application needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env. Without them it renders a clear configuration message and disables sign-in. No real credentials are included in the fixture files.
+
+Inventory checks: `npm run test:inventory` tests stock normalization and photo save/cleanup behavior; `npm run test:inventory-ui` exercises photo workflows and negative stock in Chrome. Additional fixture states are `photos`, `stock-mismatch`, `photo-upload-error`, `photo-save-error`, `photo-missing-column`, and `photo-load-error`. Photo files in these tests stay in the local fixture; nothing is uploaded to Supabase.
+
+`node qa/inventory-migration.cjs` executes the actual upgrade in embedded PostgreSQL. Install `@electric-sql/pglite@0.5.8` outside production dependencies and set PGLITE_MODULE to its package path. The test uses minimal Supabase auth/storage schema stubs and is not live Supabase validation.

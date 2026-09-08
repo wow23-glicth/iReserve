@@ -35,6 +35,7 @@ create table public.products (
   price numeric(10, 2) not null default 0.00,
   stock integer not null default 0,
   reserved_stock integer not null default 0,
+  photo_path text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -213,6 +214,9 @@ begin
   return new;
 end;
 $$ language plpgsql security definer;
+
+-- After initial setup, also run inventory_photo_upgrade.sql to create private
+-- product-photo storage and enforce nonnegative inventory writes.
 
 create trigger on_auth_user_created
   after insert on auth.users

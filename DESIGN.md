@@ -272,9 +272,11 @@ Working panels use ivory fill, a fine sage border, and broad corners. Metric car
 
 ### Inputs / Fields
 
-Fields use pale ivory fill, a fine sage outline, a visible label, and gently curved corners. Hover darkens the border. Focus changes the border to a stronger green, adds a pale green outline, and lightens the field background. Error feedback appears in the existing alert pattern rather than an invented field-error style.
+Fields use pale ivory fill, a fine sage outline, a visible label, and gently curved corners. Hover darkens the border. Focus changes the border to a stronger green, adds a pale green outline, and lightens the field background. Form-level error feedback uses the existing alert pattern.
 
 The product picker adds a search icon, an optional clear button, and an elevated options list. Options expose availability text; unavailable products are disabled. Arrow keys, Enter, Escape, focus management, and the combobox/listbox relationship are part of this component's implemented behavior.
+
+Inventory's **Product photo (optional)** field places a contained preview beside a native file control inside an ivory, sage-bordered panel. The square preview is 88px, reducing to 60px on phones; images retain their full proportions. Keep the JPG, PNG, or WebP and 5 MB guidance visible, allow the field to remain empty, and show unreadable or invalid-file feedback inline with an accessible alert linked to the input. Selection shows the filename; removal explains that the change takes effect on save. File and removal controls disable while validation or saving is busy, and phone controls retain a 44px minimum touch height.
 
 ### Navigation
 
@@ -285,6 +287,8 @@ On mobile, the navigation becomes a dismissible drawer over a dark overlay. Open
 ### Operational Tables
 
 Tables use quiet tinted headers, fine row dividers, left-aligned labels, tabular values, and a pale green row hover. Specific column widths support each record type. Action groups wrap; long names and references wrap rather than widening the document. On narrow phones, cell labels and values form a two-column record structure beneath a visually hidden table header.
+
+Inventory product details pair the name and unit with a contained thumbnail (42px, or 36px on phones); absent or failed photos show the labeled package fallback. Available stock stops at 0 with an **Out of stock** badge, 1–5 shows **Low stock**, and larger quantities show **In stock**. Retain the on-hand detail and separate reserved quantity. Invalid or over-reserved records add amber **Stock needs review** text and a page notice. Stock entry converts negative input to 0; edits below the latest reserved quantity are blocked with an explanation. These states must remain visible when records stack on phones.
 
 ### Disclosure Forms and Dialogs
 

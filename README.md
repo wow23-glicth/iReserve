@@ -511,6 +511,8 @@ Both are read from `frontend/.env.local` at development time. Before deploying t
 
 ## Interface redesign and local preview
 
+Inventory now supports optional product photos and automatically changes negative stock input to zero. Run `inventory_photo_upgrade.sql` in Supabase before enabling uploads. See [INVENTORY_PHOTOS.md](INVENTORY_PHOTOS.md) for setup, behavior, and validation details.
+
 The interface uses a shared forest-green and ivory design system across Login, Dashboard, Inventory, Sales, Reservations, Analytics, and User Settings. See DESIGN.md for component and responsive rules and UI_REDESIGN.md for verification evidence and limitations.
 
 From frontend, run npm run qa:preview to open the isolated design preview at http://127.0.0.1:4173. It uses visibly labeled synthetic records and never writes to the production database. The normal npm run dev command still uses Supabase environment variables. See frontend/qa/README.md for reproducible screen, keyboard, export, and reporting checks.
