@@ -1,5 +1,11 @@
+import ProductPicker from '../components/ProductPicker';
+import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
+import StatCard from '../components/StatCard';
+import ActionPanel from '../components/ActionPanel';
 import React, { useState, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, FileSpreadsheet, ArrowUpRight, Clock, AlertTriangle, X, Lock } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Trash2, FileText, Search, Filter, FileSpreadsheet, Clock, AlertTriangle, X, Lock } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
@@ -56,7 +62,6 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
   // Cart & Search combobox states
   const [cart, setCart] = useState<CartItem[]>([]);
   const [productSearch, setProductSearch] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,7 +199,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
     // Check if product is already in cart
     const existingIndex = cart.findIndex(item => item.product_id === prod.product_id);
     const existingQty = existingIndex > -1 ? cart[existingIndex].quantity : 0;
-    
+
     // Check stock availability
     if (prod.available < existingQty + qty) {
       setError(`Cannot add. Only ${prod.available} ${prod.unit} available in stock, and you already have ${existingQty} in the cart.`);
@@ -270,7 +275,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
         .from('products')
         .select('product_id, stock, reserved_stock, product_name')
         .in('product_id', productIds);
-      
+
       if (dbProdErr) throw dbProdErr;
 
       for (const item of cart) {
@@ -447,87 +452,34 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
 
   // Filter & Search Logic
   const filteredReservations = reservations.filter(r => {
-    const matchesSearch = r.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = r.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           r.product_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // Filter products for searchable dropdown
-  const filteredProducts = products.filter(p =>
-    p.product_name.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const { pageItems, pagination } = usePagination(filteredReservations, searchQuery + statusFilter);
 
   return (
     <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {error && <div className="ui-alert ui-alert-error">{error}</div>}
-      {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
+      {error && <div role="alert" className="ui-alert ui-alert-error">{error}</div>}
+      {successMsg && <div role="status" className="ui-alert ui-alert-success">{successMsg}</div>}
 
       {/* ── Dynamic Statistics Cards ── */}
+
       <div className="stats-grid">
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Total Reservations
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{statsTotal}</h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All time requests</span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
-            <FileText size={20} />
-          </div>
-        </div>
-
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Approved
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#22C55E' }}>{statsApproved}</h2>
-            <span style={{ fontSize: '0.75rem', color: '#22C55E', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-              <ArrowUpRight size={10} /> Active reserves
-            </span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
-            <CheckCircle size={20} />
-          </div>
-        </div>
-
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Pending Review
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#F59E0B' }}>{statsPending}</h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Awaiting action</span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', color: '#F59E0B', justifyContent: 'center' }}>
-            <Clock size={20} />
-          </div>
-        </div>
-
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Cancelled
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#EF4444' }}>{statsCancelled}</h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Declined or cancelled</span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', color: '#EF4444', justifyContent: 'center' }}>
-            <XCircle size={20} />
-          </div>
-        </div>
+        <StatCard label="Total reservations" value={error ? '—' : statsTotal} detail="All customer requests" icon={<FileText size={21} />} loading={loading} />
+        <StatCard label="Approved" value={error ? '—' : statsApproved} detail="Ready for collection" icon={<CheckCircle size={21} />} loading={loading} />
+        <StatCard label="Pending review" value={error ? '—' : statsPending} detail="Awaiting approval" icon={<Clock size={21} />} tone="amber" loading={loading} />
+        <StatCard label="Cancelled" value={error ? '—' : statsCancelled} detail="Cancelled requests" icon={<XCircle size={21} />} tone="red" loading={loading} />
       </div>
 
-      {/* ── Create Reservation — Premium layout ── */}
-      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Create New Reservation</h3>
+      <ActionPanel title="New reservation" description="Reserve products for a customer to collect.">
         <form onSubmit={handleCreateReservation} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Customer Name</label>
-              <input
+              <label className="form-label" htmlFor="reservations-field-1">Customer Name</label>
+              <input id="reservations-field-1"
                 type="text" className="form-input" placeholder="Name"
                 value={customerName} onChange={(e) => setCustomerName(e.target.value)}
                 required
@@ -538,143 +490,14 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
           </div>
 
           <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
-            <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
-              <label className="form-label">Search & Select Product</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Type to search..."
-                  value={productSearch}
-                  onChange={(e) => {
-                    setProductSearch(e.target.value);
-                    setProductId('');
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  style={{ paddingRight: '2.2rem' }}
-                />
-                {productId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProductId('');
-                      setProductSearch('');
-                    }}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0
-                    }}
-                    title="Clear selection"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-              {showDropdown && (
-                <>
-                  <div 
-                    onClick={() => setShowDropdown(false)} 
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 40,
-                      background: 'transparent'
-                    }}
-                  />
-                  <div
-                    className="glass-panel"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      marginTop: '0.5rem',
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      zIndex: 50,
-                      background: 'rgba(255, 255, 255, 0.98)',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                      borderRadius: '16px',
-                      border: '1px solid var(--border-color)',
-                      padding: '0.4rem 0'
-                    }}
-                  >
-                    {filteredProducts.length > 0 ? (
-                      filteredProducts.map(p => (
-                        <button
-                          key={p.product_id}
-                          type="button"
-                          onClick={() => {
-                            setProductId(p.product_id.toString());
-                            setProductSearch(p.product_name);
-                            setShowDropdown(false);
-                          }}
-                          disabled={p.available <= 0}
-                          style={{
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '0.6rem 1rem',
-                            background: 'transparent',
-                            border: 'none',
-                            color: p.available > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
-                            cursor: p.available > 0 ? 'pointer' : 'not-allowed',
-                            fontSize: '0.9rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            transition: 'background 0.15s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (p.available > 0) {
-                              e.currentTarget.style.background = 'rgba(102, 117, 107, 0.08)';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span style={{ fontWeight: 500 }}>{p.product_name}</span>
-                          <span style={{ fontSize: '0.78rem', color: p.available > 0 ? 'var(--primary)' : 'var(--danger)' }}>
-                            {p.available > 0 ? `${p.available} ${p.unit} avail.` : 'No Stock'}
-                          </span>
-                        </button>
-                      ))
-                    ) : (
-                      <div style={{ padding: '0.8rem 1rem', color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center' }}>
-                        No matching products
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+            <ProductPicker id="reservations-product" products={products} value={productId} query={productSearch}
+              onQueryChange={setProductSearch} onSelect={product => { setProductId(product ? String(product.product_id) : ''); if (product) setProductSearch(product.product_name); }} />
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Quantity</label>
-              <input
-                type="number" className="form-input" min="1" value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
+              <label className="form-label" htmlFor="reservations-quantity">Quantity</label>
+              <input id="reservations-quantity" type="number" className="form-input" min="1" value={quantity} onChange={event => setQuantity(event.target.value)} required />
             </div>
-
-            <button type="button" onClick={handleAddToCart} className="btn btn-secondary" style={{ height: '46px' }}>
-              Add to List
-            </button>
+            <button type="button" onClick={handleAddToCart} className="btn btn-secondary" style={{ height: '46px' }}>Add to cart</button>
           </div>
 
           {/* Cart Table */}
@@ -693,7 +516,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                   <tbody>
                     {cart.map((item, idx) => (
                       <tr key={`${item.product_id}-${idx}`}>
-                        <td data-label="Product">{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
+                        <td data-label="Product"><div>{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></div></td>
                         <td data-label="Quantity" style={{ fontWeight: 600 }}>{item.quantity}</td>
                         <td data-label="Remove" style={{ textAlign: 'center' }}>
                           <button
@@ -724,16 +547,16 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={submitting || cart.length === 0} 
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={submitting || cart.length === 0}
             style={{ height: '46px', alignSelf: 'flex-end', minWidth: '180px', marginTop: '0.5rem' }}
           >
             {submitting ? <Loader2 className="animate-spin" size={18} /> : 'Reserve Item(s)'}
           </button>
         </form>
-      </div>
+      </ActionPanel>
 
       {/* ── Table Toolbar Controls: Search, Filter, Export ── */}
       <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -742,7 +565,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
           <input
             type="text"
             className="form-input"
-            placeholder="Search by customer or product..."
+            placeholder="Search by customer or product..." aria-label="Search by customer or product..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
@@ -754,7 +577,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
         <div className="toolbar-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="toolbar-filter" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.45)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '0.2rem 0.75rem' }}>
             <Filter size={14} style={{ color: 'var(--text-secondary)' }} />
-            <select
+            <select aria-label="Filter reservations by status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               style={{
@@ -807,22 +630,22 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredReservations.map((res) => (
+                {pageItems.map((res) => (
                   <tr key={res.reservation_id}>
                     <td data-label="Customer Name"><strong style={{ color: 'var(--text-primary)' }}>{res.customer_name}</strong></td>
-                    <td data-label="Reserved Item">{res.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({res.unit})</span></td>
+                    <td data-label="Reserved Item"><div>{res.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({res.unit})</span></div></td>
                     <td data-label="Quantity" style={{ fontWeight: 600 }}>{res.quantity}</td>
                     <td data-label="Date Requested" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                       {new Date(res.reservation_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td data-label="Status">
                       <span className={`badge ${
-                        res.status === 'Approved' 
-                          ? 'badge-success' 
-                          : res.status === 'Pending' 
-                          ? 'badge-warning' 
-                          : res.status === 'Claimed' 
-                          ? 'badge-info' 
+                        res.status === 'Approved'
+                          ? 'badge-success'
+                          : res.status === 'Pending'
+                          ? 'badge-warning'
+                          : res.status === 'Claimed'
+                          ? 'badge-info'
                           : 'badge-danger'
                       }`}>
                         {res.status}
@@ -909,10 +732,11 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>No reservations found matching your criteria.</p>
           </div>
         )}
+        <Pagination {...pagination} />
       </div>
 
       {reservationToDelete && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-reservation-title">
             <div className="modal-header">
               <h3 id="delete-reservation-title" className="delete-confirm-title">
@@ -935,12 +759,12 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
               <button type="button" className="btn btn-secondary" onClick={() => setReservationToDelete(null)} disabled={actionId !== null}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleDelete} disabled={actionId !== null}>
+              <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={actionId !== null}>
                 {actionId === reservationToDelete.reservation_id ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

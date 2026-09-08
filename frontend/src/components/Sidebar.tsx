@@ -1,161 +1,53 @@
-import React from 'react';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Coins, 
-  Calendar, 
-  BarChart3, 
-  Users, 
-  LogOut 
-} from 'lucide-react';
-
+import { useEffect, useRef } from 'react';
+import { LayoutDashboard, Package, Coins, CalendarDays, ChartNoAxesCombined, Settings2, LogOut, X, ArrowUpRight } from 'lucide-react';
 interface SidebarProps {
-  page: string;
-  role: string;
-  setPage: (page: string) => void;
-  onLogout: () => void;
-  isOpen: boolean;
-  onClose: () => void;
+  page: string; role: string; setPage: (page: string) => void;
+  onLogout: () => void; isOpen: boolean; onClose: () => void;
 }
-
-const Sidebar: React.FC<SidebarProps> = ({ page, role, setPage, onLogout, isOpen, onClose }) => {
-  const canAccess = (targetPage: string) => {
-    if (role === 'Admin') return true;
-    if (role === 'Manager') {
-      return targetPage !== 'users';
-    }
-    if (role === 'Cashier') {
-      return ['home', 'sales', 'reservations', 'analytics'].includes(targetPage);
-    }
-    return false;
-  };
-
-  return (
-    <>
-      {/* Click-outside backdrop overlay */}
-      <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={onClose} />
-      
-      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
-        {/* Premium Frosted Glass Logo Area */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            gap: '0.75rem', 
-            marginBottom: '2.5rem', 
-            textAlign: 'center' 
-          }}
-        >
-          <div 
-            style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.22)',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)'
-            }}
-            className="logo-container"
-          >
-            <img 
-              src="/logo2.png" 
-              alt="PJP Hardware Logo" 
-              style={{ 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '50%', 
-                objectFit: 'cover'
-              }} 
-              className="logo-img"
-            />
-          </div>
-          <div className="brand-name" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-            <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'white', letterSpacing: '0.05em' }}>PJP HARDWARE</span>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.55)', fontWeight: 500 }}>Inventory Management</span>
-          </div>
-        </div>
-
-        <nav className="nav-menu">
-          <button 
-            className={`nav-link ${page === 'home' ? 'active' : ''}`}
-            onClick={() => { setPage('home'); onClose(); }}
-          >
-            <LayoutDashboard />
-            <span className="nav-text">Dashboard</span>
-          </button>
-
-          {canAccess('products') && (
-            <button 
-              className={`nav-link ${page === 'products' ? 'active' : ''}`}
-              onClick={() => { setPage('products'); onClose(); }}
-            >
-              <Package />
-              <span className="nav-text">Inventory</span>
-            </button>
-          )}
-
-          {canAccess('sales') && (
-            <button 
-              className={`nav-link ${page === 'sales' ? 'active' : ''}`}
-              onClick={() => { setPage('sales'); onClose(); }}
-            >
-              <Coins />
-              <span className="nav-text">Sales</span>
-            </button>
-          )}
-
-          {canAccess('reservations') && (
-            <button 
-              className={`nav-link ${page === 'reservations' ? 'active' : ''}`}
-              onClick={() => { setPage('reservations'); onClose(); }}
-            >
-              <Calendar />
-              <span className="nav-text">Reservations</span>
-            </button>
-          )}
-
-          {canAccess('analytics') && (
-            <button 
-              className={`nav-link ${page === 'analytics' ? 'active' : ''}`}
-              onClick={() => { setPage('analytics'); onClose(); }}
-            >
-              <BarChart3 />
-              <span className="nav-text">Analytics</span>
-            </button>
-          )}
-
-          {canAccess('users') && (
-            <>
-              <div style={{ margin: '1rem 0', borderTop: '1px solid rgba(255, 255, 255, 0.1)', opacity: 0.3 }} className="sidebar-divider"></div>
-
-              <button 
-                className={`nav-link ${page === 'users' ? 'active' : ''}`}
-                onClick={() => { setPage('users'); onClose(); }}
-                style={{ marginTop: 'auto' }}
-              >
-                <Users />
-                <span className="nav-text">User Settings</span>
-              </button>
-            </>
-          )}
-
-          <button 
-            className="nav-link danger"
-            onClick={() => { onLogout(); onClose(); }}
-          >
-            <LogOut />
-            <span className="nav-text">Logout</span>
-          </button>
-        </nav>
+const links = [
+  { page: 'home', label: 'Dashboard', icon: LayoutDashboard },
+  { page: 'products', label: 'Inventory', icon: Package },
+  { page: 'sales', label: 'Sales', icon: Coins },
+  { page: 'reservations', label: 'Reservations', icon: CalendarDays },
+  { page: 'analytics', label: 'Analytics', icon: ChartNoAxesCombined },
+];
+export default function Sidebar({ page, role, setPage, onLogout, isOpen, onClose }: SidebarProps) {
+  const sidebarRef = useRef<HTMLElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    // Wait for the drawer's visibility style before moving keyboard focus.
+    const focusFrame = requestAnimationFrame(() => sidebarRef.current?.querySelector<HTMLButtonElement>('.sidebar-close')?.focus());
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeRef.current();
+      if (e.key !== 'Tab') return;
+      const buttons = Array.from(sidebarRef.current?.querySelectorAll<HTMLButtonElement>('button') || []).filter(el => el.getClientRects().length);
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => { cancelAnimationFrame(focusFrame); document.body.style.overflow = overflow; document.removeEventListener('keydown', handleKey); previous?.focus(); };
+  }, [isOpen]);
+  const navigate = (next: string) => { setPage(next); onClose(); };
+  return <>
+    <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={onClose} aria-hidden="true" />
+    <aside ref={sidebarRef} className={`sidebar ${isOpen ? 'open' : ''}`} id="main-navigation" aria-label="Main navigation">
+      <button type="button" className="sidebar-close icon-button" onClick={onClose} aria-label="Close navigation"><X size={20} /></button>
+      <div className="sidebar-brand"><img src="/logo2.png" alt="PJP Hardware logo" width="64" height="64" /><strong>PJP HARDWARE</strong><span>Inventory Management</span></div>
+      <nav className="nav-menu" aria-label="Workspace">
+        {links.filter(item => item.page !== 'products' || ['Admin', 'Manager'].includes(role)).map(item => <button type="button" key={item.page} className={`nav-link ${page === item.page ? 'active' : ''}`} aria-current={page === item.page ? 'page' : undefined} onClick={() => navigate(item.page)}><item.icon size={19} /><span>{item.label}</span>{page === item.page && <span className="nav-active-dot" />}</button>)}
+      </nav>
+      <div className="sidebar-bottom">
+        <div className="sidebar-note"><ArrowUpRight size={19} /><p>Built for your<br /><strong>everyday business.</strong></p></div>
+        {role === 'Admin' && <button type="button" className={`nav-link ${page === 'users' ? 'active' : ''}`} aria-current={page === 'users' ? 'page' : undefined} onClick={() => navigate('users')}><Settings2 size={18} /><span>User Settings</span></button>}
+        <button type="button" className="nav-link logout-link" onClick={() => { onLogout(); onClose(); }}><LogOut size={18} /><span>Log out</span></button>
+        <p className="sidebar-footer">PJP Hardware · Workspace</p>
       </div>
-    </>
-  );
-};
-
-export default Sidebar;
+    </aside>
+  </>;
+}

@@ -1,238 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Package, Coins, CalendarDays, Users, AlertTriangle, ArrowUpRight, ArrowRight, RefreshCw, CircleCheck, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { Package, Coins, Calendar, Users, AlertTriangle, TrendingUp, RefreshCw, Loader2 } from 'lucide-react';
-
-interface DashboardStats {
-  products: number;
-  sales: number;
-  reservations: number;
-  customers: number;
-}
-
-interface LowStockItem {
-  product_id: number;
-  product_name: string;
-  unit: string;
-  stock: number;
-  reserved_stock: number;
-  available: number;
-}
-
-const DashboardHome: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats>({ products: 0, sales: 0, reservations: 0, customers: 0 });
-  const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+import StatCard from '../components/StatCard';
+import RevenueChart from '../components/RevenueChart';
+import { revenueWeek, type RevenueRecord } from '../utils/analytics';
+import { formatPeso } from '../utils/sales';
+interface Product { product_id: number; product_name: string; stock: number; reserved_stock: number; }
+interface Sale extends RevenueRecord { sale_id: number; transaction_id: string | null; }
+export default function DashboardHome({ userName, role, onNavigate }: { userName: string; role: string; onNavigate: (page: string) => void }) {
+  const [data, setData] = useState<{ products: Product[]; sales: Sale[]; reservations: number; customers: number }>({ products: [], sales: [], reservations: 0, customers: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchData = async () => {
+    setLoading(true); setError(null);
     try {
-      const [prodRes, salesCountRes, resCountRes, custCountRes] = await Promise.all([
-        supabase.from('products').select('*'),
-        supabase.from('sales').select('sale_id', { count: 'exact', head: true }),
+      const [products, sales, reservations, customers] = await Promise.all([
+        supabase.from('products').select('product_id, product_name, stock, reserved_stock'),
+        supabase.from('sales').select('sale_id, transaction_id, total_amount, quantity, sale_date'),
         supabase.from('reservations').select('reservation_id', { count: 'exact', head: true }),
-        supabase.from('customers').select('customer_id', { count: 'exact', head: true })
+        supabase.from('customers').select('customer_id', { count: 'exact', head: true }),
       ]);
-
-      if (prodRes.error) throw prodRes.error;
-
-      const productsList = prodRes.data || [];
-      const lowStockItems: LowStockItem[] = productsList
-        .map((p: any) => ({
-          product_id: p.product_id,
-          product_name: p.product_name,
-          unit: p.unit,
-          stock: p.stock,
-          reserved_stock: p.reserved_stock,
-          available: p.stock - p.reserved_stock
-        }))
-        .filter((p) => p.available <= 5);
-
-      setStats({
-        products: productsList.length,
-        sales: salesCountRes.count || 0,
-        reservations: resCountRes.count || 0,
-        customers: custCountRes.count || 0
-      });
-      setLowStock(lowStockItems);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data.');
-    } finally {
-      setLoading(false);
-    }
+      for (const result of [products, sales, reservations, customers]) if (result.error) throw result.error;
+      setData({ products: products.data || [], sales: sales.data || [], reservations: reservations.count || 0, customers: customers.count || 0 });
+    } catch (err) { setError(err instanceof Error ? err.message : 'Unable to load the dashboard. Please try again.'); }
+    finally { setLoading(false); }
   };
-
   useEffect(() => {
-    fetchDashboardData();
-    const channel = supabase
-      .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchDashboardData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => fetchDashboardData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchDashboardData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => fetchDashboardData())
-      .subscribe();
+    fetchData();
+    const channel = supabase.channel('dashboard-realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, fetchData).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
-
-  const statItems = [
-    { 
-      label: 'Total Products', 
-      val: stats.products, 
-      color: 'var(--primary)', 
-      bgColor: 'rgba(102, 117, 107, 0.1)', 
-      icon: <Package size={22} style={{ color: 'var(--primary)' }} />,
-      growth: '+12%'
-    },
-    { 
-      label: 'Sales Made', 
-      val: stats.sales, 
-      color: '#22C55E', 
-      bgColor: 'rgba(34, 197, 94, 0.1)', 
-      icon: <Coins size={22} style={{ color: '#22C55E' }} />,
-      growth: '+8%'
-    },
-    { 
-      label: 'Reservations', 
-      val: stats.reservations, 
-      color: '#F59E0B', 
-      bgColor: 'rgba(245, 158, 11, 0.1)', 
-      icon: <Calendar size={22} style={{ color: '#F59E0B' }} />,
-      growth: '+5%'
-    },
-    { 
-      label: 'Customers', 
-      val: stats.customers, 
-      color: '#10B981', 
-      bgColor: 'rgba(16, 185, 129, 0.1)', 
-      icon: <Users size={22} style={{ color: '#10B981' }} />,
-      growth: '+10%'
-    },
-  ];
-
-  return (
-    <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {error && (
-        <div className="ui-alert ui-alert-error dashboard-error-alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
-          <span>{error}</span>
-          <button className="btn btn-secondary btn-sm" onClick={fetchDashboardData} style={{ gap: '0.4rem', marginLeft: 'auto' }}>
-            <RefreshCw size={14} /> Retry
-          </button>
-        </div>
-      )}
-
-      {/* Stat Cards Grid */}
-      <div className="stats-grid">
-        {statItems.map((item, idx) => (
-          <div 
-            key={idx} 
-            className="glass-panel glass-panel-hover" 
-            style={{ 
-              padding: '1.5rem', 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Soft background glow */}
-            <div style={{
-              position: 'absolute',
-              top: '-15%',
-              right: '-10%',
-              width: '80px',
-              height: '80px',
-              background: item.bgColor,
-              filter: 'blur(20px)',
-              borderRadius: '50%'
-            }} />
-
-            <div>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                {item.label}
-              </p>
-              <h2 style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.3rem' }}>
-                {loading ? <Loader2 className="animate-spin" size={24} style={{ color: 'var(--text-muted)' }} /> : item.val}
-              </h2>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#22C55E', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                <TrendingUp size={12} /> {item.growth} <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>from last week</span>
-              </span>
-            </div>
-
-            <div 
-              style={{ 
-                width: '54px', 
-                height: '54px', 
-                borderRadius: '16px', 
-                background: item.bgColor, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.02)'
-              }}
-            >
-              {item.icon}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Low Stock Alerts */}
-      <div className="glass-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            Low Stock Alerts
-          </h3>
-        </div>
-        
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '1.5rem 0' }}>
-            <Loader2 className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
-          </div>
-        ) : lowStock.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {lowStock.map((item) => (
-              <div
-                className="low-stock-item"
-                key={item.product_id} 
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '1rem 1.25rem',
-                  background: 'rgba(239, 68, 68, 0.03)',
-                  border: '1px solid rgba(239, 68, 68, 0.1)',
-                  borderRadius: '16px',
-                  transition: 'transform 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(5px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{item.product_name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>Product ID: #{item.product_id}</div>
-                </div>
-                <div className="low-stock-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Total: <strong style={{ color: 'var(--text-primary)' }}>{item.stock}</strong> | Reserved: <strong style={{ color: 'var(--text-primary)' }}>{item.reserved_stock}</strong>
-                  </span>
-                  <span className="badge badge-danger" style={{ padding: '0.4rem 1rem' }}>
-                    {item.available} units left
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>All stock levels are healthy.</p>
-          </div>
-        )}
-      </div>
+  const lowStock = data.products.filter(p => p.stock - (p.reserved_stock || 0) <= 5).sort((a, b) => (a.stock - a.reserved_stock) - (b.stock - b.reserved_stock));
+  const points = revenueWeek(data.sales);
+  const weekRevenue = points.reduce((sum, p) => sum + p.amount, 0);
+  const transactions = new Set(data.sales.map(s => s.transaction_id || `legacy-${s.sale_id}`)).size;
+  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  const canManageStock = ['Admin', 'Manager'].includes(role);
+  return <div className="view-stack dashboard-view">
+    {error && <div role="alert" className="ui-alert ui-alert-error"><span>{error}</span><button className="btn btn-secondary btn-sm" onClick={fetchData}><RefreshCw size={14} /> Retry</button></div>}
+    <section className="dashboard-welcome">
+      <div><h2>{greeting}, {userName.split(' ')[0]}.</h2><p>A little clarity for a productive day.</p></div>
+      <div className="brand-banner"><div><strong>Build better.<br />Grow together.</strong><span>with PJP Hardware</span></div><img src="/hardware-workspace.png" alt="" /></div>
+    </section>
+    <div className="stats-grid">
+      <StatCard label="Total products" value={error ? '—' : data.products.length} detail="Products in your inventory" icon={<Package size={21} />} loading={loading} />
+      <StatCard label="Sales made" value={error ? '—' : transactions} detail="Completed transactions" icon={<Coins size={21} />} loading={loading} />
+      <StatCard label="Reservations" value={error ? '—' : data.reservations} detail="All customer requests" icon={<CalendarDays size={21} />} loading={loading} />
+      <StatCard label="Customers" value={error ? '—' : data.customers} detail="Customers on record" icon={<Users size={21} />} loading={loading} />
     </div>
-  );
-};
-
-export default DashboardHome;
+    <div className="dashboard-grid">
+      <section className="glass-panel chart-panel">
+        <div className="panel-heading"><div><h3>Sales overview</h3><p>Revenue over the last 7 days</p></div><span className="period-label">Last 7 days</span></div>
+        <div className="chart-total">{error ? '—' : formatPeso(weekRevenue)}<span>Total revenue this week</span></div>
+        <div className="chart-frame">{loading ? <div className="loading-state"><Loader2 className="animate-spin" size={25} /></div> : error ? <div className="empty-state"><p>Revenue is unavailable. Retry to load your records.</p></div> : <RevenueChart points={points} />}</div>
+        <button className="text-button chart-link" onClick={() => onNavigate('analytics')}>Explore analytics <ArrowUpRight size={15} /></button>
+      </section>
+      <section className="glass-panel stock-panel">
+        <div className="panel-heading"><div className="heading-with-icon"><AlertTriangle size={18} /><h3>Low stock alerts</h3></div>{!error && <span className="count-badge">{lowStock.length}</span>}</div>
+        <p className="panel-description">Products with 5 or fewer available units.</p>
+        {loading ? <div className="loading-state"><Loader2 className="animate-spin" size={24} /></div> : error ? <div className="empty-state"><p>Stock information is unavailable.</p></div> : data.products.length === 0 ? <div className="empty-state"><Package size={34} /><h4>No products yet</h4><p>{canManageStock ? "Add your first product in Inventory to start tracking stock." : "Stock levels will appear when your team adds products."}</p></div> : lowStock.length ? <div className="stock-list">{lowStock.slice(0, 5).map(item => <div className="low-stock-item" key={item.product_id}>
+          <span className="product-icon"><Package size={19} /></span><div className="stock-product"><strong>{item.product_name}</strong><span>Product #{item.product_id} · {item.reserved_stock || 0} reserved</span></div><span className="badge badge-danger">{item.stock - (item.reserved_stock || 0)} left</span>
+        </div>)}</div> : <div className="empty-state healthy-state"><CircleCheck size={34} /><h4>Stock is looking good</h4><p>All products have more than 5 available units.</p></div>}
+        {canManageStock && <button className="text-button stock-link" onClick={() => onNavigate('products')}>View inventory <ArrowRight size={15} /></button>}
+      </section>
+    </div>
+    <section className="quick-actions" aria-label="Quick actions"><div><h3>Keep business moving</h3><p>Your everyday tasks, a click away.</p></div><div><button className="btn btn-primary" onClick={() => onNavigate('sales')}><Coins size={17} /> Go to sales <ArrowUpRight size={16} /></button><button className="btn btn-secondary" onClick={() => onNavigate('reservations')}><CalendarDays size={17} /> Manage reservations</button></div></section>
+  </div>;
+}

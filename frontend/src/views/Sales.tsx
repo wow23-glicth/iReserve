@@ -1,5 +1,11 @@
+import ProductPicker from '../components/ProductPicker';
+import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
+import StatCard from '../components/StatCard';
+import ActionPanel from '../components/ActionPanel';
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Coins, Search, ShoppingBag, FileSpreadsheet, ArrowUpRight, Trash2, AlertTriangle, Printer, X } from 'lucide-react';
+import { Package, Loader2, Coins, Search, ShoppingBag, FileSpreadsheet, Trash2, AlertTriangle, Printer, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { encryptField, decryptField } from '../utils/crypto';
 import { downloadExcel, parseDateOnly, type SheetData } from '../utils/excel';
@@ -52,7 +58,6 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   // Cart & Search combobox states
   const [cart, setCart] = useState<CartItem[]>([]);
   const [productSearch, setProductSearch] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -139,7 +144,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
     // Check if product is already in cart
     const existingIndex = cart.findIndex(item => item.product_id === prod.product_id);
     const existingQty = existingIndex > -1 ? cart[existingIndex].quantity : 0;
-    
+
     // Check stock availability
     if (prod.available < existingQty + qty) {
       setError(`Cannot add. Only ${prod.available} ${prod.unit} available in stock, and you already have ${existingQty} in the cart.`);
@@ -387,8 +392,8 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   };
 
   // Filter sales
-  const filteredSales = sales.filter(s => 
-    s.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredSales = sales.filter(s =>
+    s.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.receipt_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.items.some(item => item.product_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -401,55 +406,27 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
   const filteredTotalQuantity = filteredSales.reduce((acc, s) => acc + s.total_quantity, 0);
   const filteredTotalAmount = filteredSales.reduce((acc, s) => acc + s.total_amount, 0);
 
-  // Filter products for searchable dropdown
-  const filteredProducts = products.filter(p =>
-    p.product_name.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const { pageItems, pagination } = usePagination(filteredSales, searchQuery);
 
   return (
     <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {error && <div className="ui-alert ui-alert-error">{error}</div>}
-      {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
+      {error && <div role="alert" className="ui-alert ui-alert-error">{error}</div>}
+      {successMsg && <div role="status" className="ui-alert ui-alert-success">{successMsg}</div>}
 
       {/* Stats Summary row */}
-      <div className="stats-grid">
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Total Revenue
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>₱{totalSalesRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-            <span style={{ fontSize: '0.75rem', color: '#22C55E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-              <ArrowUpRight size={10} /> Live sync
-            </span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
-            <Coins size={20} />
-          </div>
-        </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Transactions Logged
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{sales.length}</h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All time logs</span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
-            <ShoppingBag size={20} />
-          </div>
-        </div>
+      <div className="stats-grid">
+        <StatCard label="Total revenue" value={error ? '—' : formatPeso(totalSalesRevenue)} detail="Across all recorded sales" icon={<Coins size={21} />} loading={loading} />
+        <StatCard label="Transactions logged" value={error ? '—' : sales.length} detail="One record per checkout" icon={<ShoppingBag size={21} />} loading={loading} />
+        <StatCard label="Total products sold" value={error ? '—' : totalSalesQuantity.toLocaleString()} detail="Units sold across all transactions" icon={<Package size={21} />} loading={loading} />
       </div>
 
-      {/* ── Record New Sale — compact inline form ── */}
-      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Record New Sale</h3>
+      <ActionPanel title="New sale" description="Add products and create a customer receipt.">
         <form onSubmit={handleRecordSale} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Customer Name</label>
-              <input
+              <label className="form-label" htmlFor="sales-field-1">Customer Name</label>
+              <input id="sales-field-1"
                 type="text" className="form-input" placeholder="Name"
                 value={customerName} onChange={(e) => setCustomerName(e.target.value)} required
               />
@@ -459,139 +436,14 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           </div>
 
           <div className="mobile-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
-            <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
-              <label className="form-label">Search & Select Product</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Type to search..."
-                  value={productSearch}
-                  onChange={(e) => {
-                    setProductSearch(e.target.value);
-                    setProductId('');
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  style={{ paddingRight: '2.2rem' }}
-                />
-                {productId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProductId('');
-                      setProductSearch('');
-                    }}
-                    style={{
-                      position: 'absolute',
-                      right: '0.75rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0
-                    }}
-                    title="Clear selection"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-              {showDropdown && (
-                <>
-                  <div 
-                    onClick={() => setShowDropdown(false)} 
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 40,
-                      background: 'transparent'
-                    }}
-                  />
-                  <div
-                    className="glass-panel"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      marginTop: '0.5rem',
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      zIndex: 50,
-                      background: 'rgba(255, 255, 255, 0.98)',
-                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                      borderRadius: '16px',
-                      border: '1px solid var(--border-color)',
-                      padding: '0.4rem 0'
-                    }}
-                  >
-                    {filteredProducts.length > 0 ? (
-                      filteredProducts.map(p => (
-                        <button
-                          key={p.product_id}
-                          type="button"
-                          onClick={() => {
-                            setProductId(p.product_id.toString());
-                            setProductSearch(p.product_name);
-                            setShowDropdown(false);
-                          }}
-                          disabled={p.available <= 0}
-                          style={{
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '0.6rem 1rem',
-                            background: 'transparent',
-                            border: 'none',
-                            color: p.available > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
-                            cursor: p.available > 0 ? 'pointer' : 'not-allowed',
-                            fontSize: '0.9rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            transition: 'background 0.15s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (p.available > 0) {
-                              e.currentTarget.style.background = 'rgba(102, 117, 107, 0.08)';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span style={{ fontWeight: 500 }}>{p.product_name}</span>
-                          <span style={{ fontSize: '0.78rem', color: p.available > 0 ? 'var(--primary)' : 'var(--danger)' }}>
-                            {p.available > 0 ? `${p.available} ${p.unit} left` : 'Out of Stock'}
-                          </span>
-                        </button>
-                      ))
-                    ) : (
-                      <div style={{ padding: '0.8rem 1rem', color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center' }}>
-                        No matching products
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+            <ProductPicker id="sales-product" products={products} value={productId} query={productSearch}
+              onQueryChange={setProductSearch} onSelect={product => { setProductId(product ? String(product.product_id) : ''); if (product) setProductSearch(product.product_name); }} />
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Quantity</label>
-              <input type="number" className="form-input" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+              <label className="form-label" htmlFor="sales-quantity">Quantity</label>
+              <input id="sales-quantity" type="number" className="form-input" min="1" value={quantity} onChange={event => setQuantity(event.target.value)} required />
             </div>
-
-            <button type="button" onClick={handleAddToCart} className="btn btn-secondary" style={{ height: '46px' }}>
-              Add to List
-            </button>
+            <button type="button" onClick={handleAddToCart} className="btn btn-secondary" style={{ height: '46px' }}>Add to cart</button>
           </div>
 
           {/* Cart Table */}
@@ -612,7 +464,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                   <tbody>
                     {cart.map((item, idx) => (
                       <tr key={`${item.product_id}-${idx}`}>
-                        <td data-label="Product">{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></td>
+                        <td data-label="Product"><div>{item.product_name} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>({item.unit})</span></div></td>
                         <td data-label="Unit Price">₱{item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                         <td data-label="Quantity" style={{ fontWeight: 600 }}>{item.quantity}</td>
                         <td data-label="Subtotal" style={{ fontWeight: 600 }}>₱{(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -651,16 +503,16 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={submitting || cart.length === 0} 
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={submitting || cart.length === 0}
             style={{ height: '46px', alignSelf: 'flex-end', minWidth: '180px', marginTop: '0.5rem' }}
           >
             {submitting ? <Loader2 className="animate-spin" size={18} /> : 'Process Sale'}
           </button>
         </form>
-      </div>
+      </ActionPanel>
 
       {/* ── Toolbar: Search & Export ── */}
       <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -668,7 +520,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
           <input
             type="text"
             className="form-input"
-            placeholder="Search transactions..."
+            placeholder="Search transactions..." aria-label="Search transactions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
@@ -725,7 +577,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredSales.map((sale) => (
+                {pageItems.map((sale) => (
                   <tr key={sale.transaction_id}>
                     <td data-label="Receipt" className="sales-receipt-reference">
                       <strong>{sale.receipt_number}</strong>
@@ -780,7 +632,7 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               <tfoot>
                 <tr>
                   <td data-label="Summary" colSpan={3} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    TOTAL{searchQuery ? ' (filtered)' : ''}
+                    TOTAL · ALL MATCHING RECORDS
                   </td>
                   <td data-label="Total Quantity" style={{ fontWeight: 700 }}>{filteredTotalQuantity}</td>
                   <td data-label="Total Amount" style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
@@ -796,10 +648,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>No sales records match your criteria.</p>
           </div>
         )}
+        <Pagination {...pagination} />
       </div>
 
       {showClearHistory && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="clear-history-title">
             <div className="modal-header">
               <h3 id="clear-history-title" className="delete-confirm-title">
@@ -849,11 +702,11 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {saleToDelete && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-sale-title">
             <div className="modal-header">
               <h3 id="delete-sale-title" className="delete-confirm-title">
@@ -877,12 +730,12 @@ const Sales: React.FC<SalesProps> = ({ role }) => {
               <button type="button" className="btn btn-secondary" onClick={() => setSaleToDelete(null)} disabled={deleting}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleDeleteSale} disabled={deleting}>
+              <button type="button" className="btn btn-danger" onClick={handleDeleteSale} disabled={deleting}>
                 {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {receiptToPrint && (

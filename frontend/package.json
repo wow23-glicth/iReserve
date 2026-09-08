@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "qa:preview": "vite --config qa/vite.config.ts",
+    "test:ui": "node qa/inspect.cjs",
+    "test:metrics": "node --test qa/metrics.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",

@@ -1,0 +1,593 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T11:54:35.452Z",
+  "title": "Design System: PJP Hardware",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Working Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.0891 162.02)",
+          "oklch(26.43% 0.0891 162.02)",
+          "oklch(37.86% 0.0891 162.02)",
+          "oklch(49.29% 0.0891 162.02)",
+          "oklch(60.71% 0.0891 162.02)",
+          "oklch(72.14% 0.0891 162.02)",
+          "oklch(83.57% 0.0891 162.02)",
+          "oklch(95.00% 0.0891 162.02)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Deep Working Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.0710 162.62)",
+          "oklch(26.43% 0.0710 162.62)",
+          "oklch(37.86% 0.0710 162.62)",
+          "oklch(49.29% 0.0710 162.62)",
+          "oklch(60.71% 0.0710 162.62)",
+          "oklch(72.14% 0.0710 162.62)",
+          "oklch(83.57% 0.0710 162.62)",
+          "oklch(95.00% 0.0710 162.62)"
+        ]
+      },
+      "workspace": {
+        "role": "neutral",
+        "displayName": "Warm Workspace",
+        "tonalRamp": [
+          "oklch(15.00% 0.0110 123.46)",
+          "oklch(26.43% 0.0110 123.46)",
+          "oklch(37.86% 0.0110 123.46)",
+          "oklch(49.29% 0.0110 123.46)",
+          "oklch(60.71% 0.0110 123.46)",
+          "oklch(72.14% 0.0110 123.46)",
+          "oklch(83.57% 0.0110 123.46)",
+          "oklch(95.00% 0.0110 123.46)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Ivory Surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.0066 115.70)",
+          "oklch(26.43% 0.0066 115.70)",
+          "oklch(37.86% 0.0066 115.70)",
+          "oklch(49.29% 0.0066 115.70)",
+          "oklch(60.71% 0.0066 115.70)",
+          "oklch(72.14% 0.0066 115.70)",
+          "oklch(83.57% 0.0066 115.70)",
+          "oklch(95.00% 0.0066 115.70)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Sage Canvas",
+        "tonalRamp": [
+          "oklch(15.00% 0.0160 130.42)",
+          "oklch(26.43% 0.0160 130.42)",
+          "oklch(37.86% 0.0160 130.42)",
+          "oklch(49.29% 0.0160 130.42)",
+          "oklch(60.71% 0.0160 130.42)",
+          "oklch(72.14% 0.0160 130.42)",
+          "oklch(83.57% 0.0160 130.42)",
+          "oklch(95.00% 0.0160 130.42)"
+        ]
+      },
+      "forest-start": {
+        "role": "primary",
+        "displayName": "Forest Start",
+        "tonalRamp": [
+          "oklch(15.00% 0.0596 161.35)",
+          "oklch(26.43% 0.0596 161.35)",
+          "oklch(37.86% 0.0596 161.35)",
+          "oklch(49.29% 0.0596 161.35)",
+          "oklch(60.71% 0.0596 161.35)",
+          "oklch(72.14% 0.0596 161.35)",
+          "oklch(83.57% 0.0596 161.35)",
+          "oklch(95.00% 0.0596 161.35)"
+        ]
+      },
+      "forest-end": {
+        "role": "primary",
+        "displayName": "Forest Depth",
+        "tonalRamp": [
+          "oklch(15.00% 0.0415 169.39)",
+          "oklch(26.43% 0.0415 169.39)",
+          "oklch(37.86% 0.0415 169.39)",
+          "oklch(49.29% 0.0415 169.39)",
+          "oklch(60.71% 0.0415 169.39)",
+          "oklch(72.14% 0.0415 169.39)",
+          "oklch(83.57% 0.0415 169.39)",
+          "oklch(95.00% 0.0415 169.39)"
+        ]
+      },
+      "mint-active": {
+        "role": "primary",
+        "displayName": "Mint Location",
+        "tonalRamp": [
+          "oklch(15.00% 0.1006 145.08)",
+          "oklch(26.43% 0.1006 145.08)",
+          "oklch(37.86% 0.1006 145.08)",
+          "oklch(49.29% 0.1006 145.08)",
+          "oklch(60.71% 0.1006 145.08)",
+          "oklch(72.14% 0.1006 145.08)",
+          "oklch(83.57% 0.1006 145.08)",
+          "oklch(95.00% 0.1006 145.08)"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Forest Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0394 157.60)",
+          "oklch(26.43% 0.0394 157.60)",
+          "oklch(37.86% 0.0394 157.60)",
+          "oklch(49.29% 0.0394 157.60)",
+          "oklch(60.71% 0.0394 157.60)",
+          "oklch(72.14% 0.0394 157.60)",
+          "oklch(83.57% 0.0394 157.60)",
+          "oklch(95.00% 0.0394 157.60)"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Muted Leaf Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0292 148.69)",
+          "oklch(26.43% 0.0292 148.69)",
+          "oklch(37.86% 0.0292 148.69)",
+          "oklch(49.29% 0.0292 148.69)",
+          "oklch(60.71% 0.0292 148.69)",
+          "oklch(72.14% 0.0292 148.69)",
+          "oklch(83.57% 0.0292 148.69)",
+          "oklch(95.00% 0.0292 148.69)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Fine Sage Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.0206 131.46)",
+          "oklch(26.43% 0.0206 131.46)",
+          "oklch(37.86% 0.0206 131.46)",
+          "oklch(49.29% 0.0206 131.46)",
+          "oklch(60.71% 0.0206 131.46)",
+          "oklch(72.14% 0.0206 131.46)",
+          "oklch(83.57% 0.0206 131.46)",
+          "oklch(95.00% 0.0206 131.46)"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Success Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.0859 159.30)",
+          "oklch(26.43% 0.0859 159.30)",
+          "oklch(37.86% 0.0859 159.30)",
+          "oklch(49.29% 0.0859 159.30)",
+          "oklch(60.71% 0.0859 159.30)",
+          "oklch(72.14% 0.0859 159.30)",
+          "oklch(83.57% 0.0859 159.30)",
+          "oklch(95.00% 0.0859 159.30)"
+        ]
+      },
+      "success-bg": {
+        "role": "secondary",
+        "displayName": "Success Tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0278 147.02)",
+          "oklch(26.43% 0.0278 147.02)",
+          "oklch(37.86% 0.0278 147.02)",
+          "oklch(49.29% 0.0278 147.02)",
+          "oklch(60.71% 0.0278 147.02)",
+          "oklch(72.14% 0.0278 147.02)",
+          "oklch(83.57% 0.0278 147.02)",
+          "oklch(95.00% 0.0278 147.02)"
+        ]
+      },
+      "success-border": {
+        "role": "secondary",
+        "displayName": "Success Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.0505 150.51)",
+          "oklch(26.43% 0.0505 150.51)",
+          "oklch(37.86% 0.0505 150.51)",
+          "oklch(49.29% 0.0505 150.51)",
+          "oklch(60.71% 0.0505 150.51)",
+          "oklch(72.14% 0.0505 150.51)",
+          "oklch(83.57% 0.0505 150.51)",
+          "oklch(95.00% 0.0505 150.51)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Amber Attention",
+        "tonalRamp": [
+          "oklch(15.00% 0.1055 72.27)",
+          "oklch(26.43% 0.1055 72.27)",
+          "oklch(37.86% 0.1055 72.27)",
+          "oklch(49.29% 0.1055 72.27)",
+          "oklch(60.71% 0.1055 72.27)",
+          "oklch(72.14% 0.1055 72.27)",
+          "oklch(83.57% 0.1055 72.27)",
+          "oklch(95.00% 0.1055 72.27)"
+        ]
+      },
+      "warning-bg": {
+        "role": "secondary",
+        "displayName": "Amber Tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0428 87.96)",
+          "oklch(26.43% 0.0428 87.96)",
+          "oklch(37.86% 0.0428 87.96)",
+          "oklch(49.29% 0.0428 87.96)",
+          "oklch(60.71% 0.0428 87.96)",
+          "oklch(72.14% 0.0428 87.96)",
+          "oklch(83.57% 0.0428 87.96)",
+          "oklch(95.00% 0.0428 87.96)"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Muted Red",
+        "tonalRamp": [
+          "oklch(15.00% 0.1441 21.04)",
+          "oklch(26.43% 0.1441 21.04)",
+          "oklch(37.86% 0.1441 21.04)",
+          "oklch(49.29% 0.1441 21.04)",
+          "oklch(60.71% 0.1441 21.04)",
+          "oklch(72.14% 0.1441 21.04)",
+          "oklch(83.57% 0.1441 21.04)",
+          "oklch(95.00% 0.1441 21.04)"
+        ]
+      },
+      "danger-bg": {
+        "role": "secondary",
+        "displayName": "Red Tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0210 24.79)",
+          "oklch(26.43% 0.0210 24.79)",
+          "oklch(37.86% 0.0210 24.79)",
+          "oklch(49.29% 0.0210 24.79)",
+          "oklch(60.71% 0.0210 24.79)",
+          "oklch(72.14% 0.0210 24.79)",
+          "oklch(83.57% 0.0210 24.79)",
+          "oklch(95.00% 0.0210 24.79)"
+        ]
+      },
+      "danger-border": {
+        "role": "secondary",
+        "displayName": "Red Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.0423 23.47)",
+          "oklch(26.43% 0.0423 23.47)",
+          "oklch(37.86% 0.0423 23.47)",
+          "oklch(49.29% 0.0423 23.47)",
+          "oklch(60.71% 0.0423 23.47)",
+          "oklch(72.14% 0.0423 23.47)",
+          "oklch(83.57% 0.0423 23.47)",
+          "oklch(95.00% 0.0423 23.47)"
+        ]
+      },
+      "info": {
+        "role": "secondary",
+        "displayName": "Quiet Teal",
+        "tonalRamp": [
+          "oklch(15.00% 0.0607 186.17)",
+          "oklch(26.43% 0.0607 186.17)",
+          "oklch(37.86% 0.0607 186.17)",
+          "oklch(49.29% 0.0607 186.17)",
+          "oklch(60.71% 0.0607 186.17)",
+          "oklch(72.14% 0.0607 186.17)",
+          "oklch(83.57% 0.0607 186.17)",
+          "oklch(95.00% 0.0607 186.17)"
+        ]
+      },
+      "info-bg": {
+        "role": "secondary",
+        "displayName": "Teal Tint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0133 152.60)",
+          "oklch(26.43% 0.0133 152.60)",
+          "oklch(37.86% 0.0133 152.60)",
+          "oklch(49.29% 0.0133 152.60)",
+          "oklch(60.71% 0.0133 152.60)",
+          "oklch(72.14% 0.0133 152.60)",
+          "oklch(83.57% 0.0133 152.60)",
+          "oklch(95.00% 0.0133 152.60)"
+        ]
+      },
+      "form-bg": {
+        "role": "neutral",
+        "displayName": "Field Ivory",
+        "tonalRamp": [
+          "oklch(15.00% 0.0067 115.70)",
+          "oklch(26.43% 0.0067 115.70)",
+          "oklch(37.86% 0.0067 115.70)",
+          "oklch(49.29% 0.0067 115.70)",
+          "oklch(60.71% 0.0067 115.70)",
+          "oklch(72.14% 0.0067 115.70)",
+          "oklch(83.57% 0.0067 115.70)",
+          "oklch(95.00% 0.0067 115.70)"
+        ]
+      },
+      "form-border": {
+        "role": "neutral",
+        "displayName": "Field Sage Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.0223 132.55)",
+          "oklch(26.43% 0.0223 132.55)",
+          "oklch(37.86% 0.0223 132.55)",
+          "oklch(49.29% 0.0223 132.55)",
+          "oklch(60.71% 0.0223 132.55)",
+          "oklch(72.14% 0.0223 132.55)",
+          "oklch(83.57% 0.0223 132.55)",
+          "oklch(95.00% 0.0223 132.55)"
+        ]
+      },
+      "table-header": {
+        "role": "neutral",
+        "displayName": "Table Sage",
+        "tonalRamp": [
+          "oklch(15.00% 0.0167 125.29)",
+          "oklch(26.43% 0.0167 125.29)",
+          "oklch(37.86% 0.0167 125.29)",
+          "oklch(49.29% 0.0167 125.29)",
+          "oklch(60.71% 0.0167 125.29)",
+          "oklch(72.14% 0.0167 125.29)",
+          "oklch(83.57% 0.0167 125.29)",
+          "oklch(95.00% 0.0167 125.29)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0)",
+          "oklch(26.43% 0.0000 0)",
+          "oklch(37.86% 0.0000 0)",
+          "oklch(49.29% 0.0000 0)",
+          "oklch(60.71% 0.0000 0)",
+          "oklch(72.14% 0.0000 0)",
+          "oklch(83.57% 0.0000 0)",
+          "oklch(95.00% 0.0000 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Login Display",
+        "purpose": "The login statement at wide sizes."
+      },
+      "headline": {
+        "displayName": "Page Headline",
+        "purpose": "Responsive page titles."
+      },
+      "metric": {
+        "displayName": "Metric Value",
+        "purpose": "Bold tabular operational values."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Standard h3 headings; panel headings have a 14px variant."
+      },
+      "body": {
+        "displayName": "Base Body",
+        "purpose": "The document base; fields and records use compact contextual sizes."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "Visible field labels."
+      },
+      "action": {
+        "displayName": "Action Label",
+        "purpose": "Standard button text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "selected-navigation",
+        "value": "0 5px 12px #071e241a",
+        "purpose": "Selected sidebar row."
+      },
+      {
+        "name": "product-options",
+        "value": "0 10px 25px #203a2426",
+        "purpose": "Product suggestion list above form content."
+      },
+      {
+        "name": "modal",
+        "value": "0 24px 80px #071a2459",
+        "purpose": "Dialog surface above the page overlay."
+      },
+      {
+        "name": "login-frame",
+        "value": "0 24px 80px #2b4c3620",
+        "purpose": "Diffuse login card framing."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "0.18s ease",
+        "purpose": "Background, color, and border state transitions."
+      },
+      {
+        "name": "disclosure-chevron",
+        "value": "transform 0.2s ease",
+        "purpose": "Chevron rotation on disclosure open/close."
+      },
+      {
+        "name": "mobile-drawer",
+        "value": "transform 0.24s ease",
+        "purpose": "Mobile navigation drawer movement."
+      },
+      {
+        "name": "loading-spinner",
+        "value": "spin 0.9s linear infinite",
+        "purpose": "Loading feedback; the app's reduced-motion rule suppresses repeated animation."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition-duration: 0s; animation-duration: 0.01ms; animation-iteration-count: 1",
+        "purpose": "Applied under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-workspace-min",
+        "value": "1600px"
+      },
+      {
+        "name": "compact-desktop-max",
+        "value": "1250px"
+      },
+      {
+        "name": "stacked-tablet-max",
+        "value": "1050px"
+      },
+      {
+        "name": "mobile-drawer-max",
+        "value": "768px"
+      },
+      {
+        "name": "stacked-records-max",
+        "value": "576px"
+      },
+      {
+        "name": "narrow-phone-max",
+        "value": "360px"
+      },
+      {
+        "name": "short-viewport-height-max",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The standard green action control, extracted from the shared button styles.",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\">Save changes</button>",
+      "css": ".ds-btn-primary { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:var(--radius-sm,8px); font-size:11px; font-weight:700; line-height:1.4; text-decoration:none; cursor:pointer; transition:background .18s,border-color .18s; color:white; background:var(--primary-gradient,linear-gradient(115deg,#287653,#184b36)); } .ds-btn-primary:disabled { opacity:.5; cursor:not-allowed; } .ds-btn-primary:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(max-width:768px) { .ds-btn-primary { min-height:44px; } } @media(prefers-reduced-motion:reduce) { .ds-btn-primary { transition:none; } }.ds-btn-primary:hover:not(:disabled) { background:var(--primary-hover,#164f38); }"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A quieter action for cancellation, editing, and supporting operations.",
+      "html": "<button type=\"button\" class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:var(--radius-sm,8px); font-size:11px; font-weight:700; line-height:1.4; text-decoration:none; cursor:pointer; transition:background .18s,border-color .18s; background:#f6f9ef; border-color:#dce5d6; color:#36573f; } .ds-btn-secondary:disabled { opacity:.5; cursor:not-allowed; } .ds-btn-secondary:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(max-width:768px) { .ds-btn-secondary { min-height:44px; } } @media(prefers-reduced-motion:reduce) { .ds-btn-secondary { transition:none; } }.ds-btn-secondary:hover:not(:disabled) { background:#e9f1e1; border-color:#b8cdb0; }"
+    },
+    {
+      "name": "Destructive Confirmation",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Filled red confirmation treatment used inside destructive dialogs.",
+      "html": "<button type=\"button\" class=\"ds-btn-danger\">Delete product</button>",
+      "css": ".ds-btn-danger { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:var(--radius-sm,8px); font-size:11px; font-weight:700; line-height:1.4; text-decoration:none; cursor:pointer; transition:background .18s,border-color .18s; background:#a63c42; color:white; } .ds-btn-danger:disabled { opacity:.5; cursor:not-allowed; } .ds-btn-danger:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(max-width:768px) { .ds-btn-danger { min-height:44px; } } @media(prefers-reduced-motion:reduce) { .ds-btn-danger { transition:none; } }.ds-btn-danger:hover:not(:disabled) { background:#822f35; }"
+    },
+    {
+      "name": "Success Action",
+      "kind": "button",
+      "refersTo": "button-success",
+      "description": "The pale positive action treatment used in reservation workflows.",
+      "html": "<button type=\"button\" class=\"ds-btn-success\">Confirm</button>",
+      "css": ".ds-btn-success { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:var(--radius-sm,8px); font-size:11px; font-weight:700; line-height:1.4; text-decoration:none; cursor:pointer; transition:background .18s,border-color .18s; color:var(--success,#246747); background:var(--success-bg,#e2f3e3); border-color:var(--success-border,#c4e5ca); } .ds-btn-success:disabled { opacity:.5; cursor:not-allowed; } .ds-btn-success:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(max-width:768px) { .ds-btn-success { min-height:44px; } } @media(prefers-reduced-motion:reduce) { .ds-btn-success { transition:none; } }.ds-btn-success:hover:not(:disabled) { background:#cbe7cc; }"
+    },
+    {
+      "name": "Labeled Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The shared visible label and editable text field; mobile text expands to 16px.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-product-name\">Product name</label><input class=\"ds-input\" id=\"ds-product-name\" placeholder=\"Enter product name\" autocomplete=\"off\"></div>",
+      "css": ".ds-field { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); width:100%; color:var(--text-primary,#20382a); } .ds-label { display:block; font-size:12px; font-weight:600; line-height:1.5; color:#4e6352; margin-bottom:7px; } .ds-input { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:block; width:100%; min-width:0; min-height:44px; padding:10px 13px; background:#fbfcf7; border:1px solid #d9e2d3; border-radius:8px; font-size:12px; color:var(--text-primary,#20382a); caret-color:var(--primary,#216c4d); transition:border-color .18s,box-shadow .18s; } .ds-input::placeholder { color:#5b6b5d; font-size:11px; opacity:1; } .ds-input:hover { border-color:#a8bca1; } .ds-input:focus,.ds-input:focus-visible { border-color:#4d8b60; outline:2px solid #bfd9bd; outline-offset:1px; background:#fffef8; } @media(max-width:576px) { .ds-input { font-size:16px; min-height:46px; } .ds-input::placeholder { font-size:12px; } } @media(prefers-reduced-motion:reduce) { .ds-input { transition:none; } }"
+    },
+    {
+      "name": "Forest Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Selected and resting workspace rows, including the implemented mint location dot. This preview illustrates appearance; the application supplies navigation and drawer behavior.",
+      "html": "<nav class=\"ds-navigation\" aria-label=\"Workspace preview\"><button type=\"button\" class=\"ds-nav-link ds-nav-active\" aria-current=\"page\"><svg class=\"ds-icon\" width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg><span>Dashboard</span><span class=\"ds-nav-dot\"></span></button><button type=\"button\" class=\"ds-nav-link\"><svg class=\"ds-icon\" width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><polyline points=\"3.29 7 12 12 20.71 7\"/><path d=\"m7.5 4.27 9 5.15\"/></svg><span>Inventory</span></button></nav>",
+      "css": ".ds-navigation { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:flex; flex-direction:column; gap:7px; padding:15px; width:216px; border-radius:18px; background:linear-gradient(160deg,#204b37,#102f25 80%); } .ds-nav-link { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); width:100%; padding:13px 14px; min-height:46px; display:flex; align-items:center; gap:12px; border:0; border-radius:9px; background:transparent; color:#c9d9ca; font-size:12px; font-weight:600; text-align:left; cursor:pointer; transition:background .18s,color .18s; } .ds-nav-link:hover { background:#2a543e; color:white; } .ds-nav-active,.ds-nav-active:hover { color:white; background:linear-gradient(110deg,#378b5e,#286c4c); box-shadow:0 5px 12px #071e241a; } .ds-nav-dot { width:5px; height:5px; border-radius:50%; margin-left:auto; background:#b1edb2; } .ds-icon { flex-shrink:0; } .ds-nav-link:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(prefers-reduced-motion:reduce) { .ds-nav-link { transition:none; } }"
+    },
+    {
+      "name": "Status Badges",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Read-only semantic badges share compact geometry and always carry words. These examples illustrate the existing status styles.",
+      "html": "<div class=\"ds-badge-set\"><span class=\"ds-badge ds-badge-success\">In stock</span><span class=\"ds-badge ds-badge-warning\">Low stock</span><span class=\"ds-badge ds-badge-danger\">Out of stock</span><span class=\"ds-badge ds-badge-info\">pcs</span></div>",
+      "css": ".ds-badge-set { display:flex; flex-wrap:wrap; align-items:center; gap:7px; } .ds-badge { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); display:inline-flex; align-items:center; justify-content:center; border-radius:5px; padding:3px 7px; font-size:9px; font-weight:700; line-height:1.6; white-space:nowrap; } .ds-badge-success { color:var(--success,#246747); background:var(--success-bg,#e2f3e3); } .ds-badge-warning { color:var(--warning,#8b5b0b); background:var(--warning-bg,#fff2d3); } .ds-badge-danger { color:var(--danger,#ac3e43); background:var(--danger-bg,#fce9e7); } .ds-badge-info { color:var(--info,#2d6660); background:var(--info-bg,#e8f1ea); }"
+    },
+    {
+      "name": "Metric Card",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "The StatCard structure: label, tabular value, detail, and icon well. The number is an illustrative specimen, not live inventory.",
+      "html": "<div class=\"ds-stat-card\"><div class=\"ds-stat-info\"><p>Total products</p><h2>14</h2><span>Products in your inventory</span></div><div class=\"ds-stat-icon\"><svg class=\"ds-icon\" width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><polyline points=\"3.29 7 12 12 20.71 7\"/><path d=\"m7.5 4.27 9 5.15\"/></svg></div></div>",
+      "css": ".ds-stat-card { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:21px; color:var(--text-primary,#20382a); border:1px solid var(--border-color,#dfe7d9); border-radius:16px; background:linear-gradient(135deg,#fdfef8 30%,#f1f8ed); } .ds-stat-info { min-width:0; } .ds-stat-info>p { color:var(--text-secondary,#5b6b5d); font-size:12px; font-weight:600; line-height:1.5; margin:0 0 9px; } .ds-stat-info h2 { font-family:var(--font-heading,'Manrope','Segoe UI',sans-serif); font-size:clamp(21px,1.8vw,27px); font-weight:800; line-height:1.25; letter-spacing:-.025em; margin:0 0 6px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; } .ds-stat-info>span { font-size:11px; color:var(--text-secondary,#5b6b5d); display:block; line-height:1.6; } .ds-stat-icon { flex:0 0 auto; display:grid; place-items:center; width:43px; height:43px; background:#e2f2df; color:#3b895b; border-radius:12px; margin-top:4px; } @media(max-width:576px) { .ds-stat-card { padding:15px 12px; gap:7px; border-radius:12px; position:relative; } .ds-stat-info>p { font-size:11px; max-width:12ch; min-height:34px; padding-right:5px; } .ds-stat-info h2 { font-size:21px; } .ds-stat-info>span { font-size:10px; } .ds-stat-icon { position:absolute; top:12px; right:10px; width:29px; height:29px; border-radius:8px; } .ds-stat-icon svg { width:16px; height:16px; } }"
+    },
+    {
+      "name": "Disclosure Action Panel",
+      "kind": "custom",
+      "refersTo": "action-panel",
+      "description": "Native details/summary reveals form space using the implemented action header and rotating chevron. The preview's content is explanatory.",
+      "html": "<details class=\"ds-action-panel\"><summary class=\"ds-action-summary\"><span class=\"ds-action-intro\"><strong>Add product</strong><span>Enter a product to update your inventory.</span></span><span class=\"ds-action-toggle\"><svg class=\"ds-icon\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg><span>Add product</span><svg class=\"ds-disclosure-chevron\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></span></summary><div class=\"ds-action-body\">The product form appears here when expanded.</div></details>",
+      "css": ".ds-action-panel { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); background:var(--bg-card,#fcfdf8); color:var(--text-primary,#20382a); border:1px solid var(--border-color,#dfe7d9); border-radius:16px; overflow:visible; } .ds-action-summary { list-style:none; display:flex; align-items:center; justify-content:space-between; padding:17px 21px; gap:14px; cursor:pointer; border-radius:15px; } .ds-action-summary::-webkit-details-marker { display:none; } .ds-action-summary:hover { background:#f5f9ef; } .ds-action-intro { min-width:0; display:flex; flex-direction:column; gap:4px; line-height:1.5; } .ds-action-intro strong { font-size:13px; } .ds-action-intro>span { font-size:10px; color:var(--text-secondary,#5b6b5d); } .ds-action-toggle { display:flex; align-items:center; gap:7px; background:var(--primary-gradient,linear-gradient(115deg,#287653,#184b36)); padding:10px 14px; border-radius:8px; color:white; font-size:11px; font-weight:600; flex-shrink:0; min-height:40px; } .ds-disclosure-chevron { transition:transform .2s; } .ds-action-panel[open] .ds-disclosure-chevron { transform:rotate(180deg); } .ds-action-panel[open] .ds-action-summary { border-bottom:1px solid var(--border-color,#dfe7d9); border-radius:15px 15px 0 0; } .ds-action-body { padding:22px; font-size:12px; line-height:1.5; } .ds-action-summary:focus-visible { outline:3px solid #58936a; outline-offset:3px; } @media(max-width:576px) { .ds-action-summary { padding:14px; gap:10px; } .ds-action-intro>strong { font-size:12px; } .ds-action-intro>span { max-width:26ch; } .ds-action-toggle { padding:10px; min-height:44px; } .ds-action-toggle>span { display:none; } .ds-action-body { padding:17px 14px; } } @media(prefers-reduced-motion:reduce) { .ds-disclosure-chevron { transition:none; } }"
+    },
+    {
+      "name": "Operational Table",
+      "kind": "custom",
+      "refersTo": "table-header",
+      "description": "The shared table surface and labeled phone transformation, shown with illustrative product rows rather than live records.",
+      "html": "<div class=\"ds-table-panel\"><table class=\"ds-table\"><thead><tr><th scope=\"col\">Product</th><th scope=\"col\">Available stock</th><th scope=\"col\">Unit price</th></tr></thead><tbody><tr><td data-label=\"Product\"><strong>Safety Gloves</strong></td><td data-label=\"Available stock\">12</td><td data-label=\"Unit price\">₱85.00</td></tr><tr><td data-label=\"Product\"><strong>Paint Roller</strong></td><td data-label=\"Available stock\">4</td><td data-label=\"Unit price\">₱125.00</td></tr></tbody></table></div>",
+      "css": ".ds-table-panel { font-family:var(--font-body,'Manrope','Segoe UI',sans-serif); padding:22px; border:1px solid var(--border-color,#dfe7d9); border-radius:16px; background:var(--bg-card,#fcfdf8); color:var(--text-primary,#20382a); min-width:0; overflow-x:auto; } .ds-table { border-collapse:collapse; width:100%; table-layout:fixed; font-variant-numeric:tabular-nums; } .ds-table th { text-align:left; font-size:11px; color:#586c5a; background:#f0f5e9; font-weight:600; padding:12px 13px; line-height:1.5; } .ds-table th:first-child { border-radius:7px 0 0 7px; } .ds-table th:last-child { border-radius:0 7px 7px 0; } .ds-table td { text-align:left; font-size:12px; padding:14px 13px; border-bottom:1px solid #e8eee2; vertical-align:middle; line-height:1.6; overflow-wrap:anywhere; } .ds-table tbody tr:hover { background:#f3f8ed; } .ds-table tbody tr:last-child td { border-bottom:none; } @media(max-width:576px) { .ds-table-panel { padding:15px; } .ds-table,.ds-table tbody { display:block; width:100%; } .ds-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; } .ds-table tr { display:block; width:100%; padding:12px 0; border-bottom:1px solid #dce6d4; } .ds-table tr:first-child { padding-top:0; } .ds-table tr:last-child { border-bottom:none; } .ds-table td { display:grid; grid-template-columns:minmax(85px,.7fr) minmax(0,1.3fr); gap:12px; width:100%; min-width:0; padding:8px 0; border:none; text-align:left; font-size:12px; align-items:start; } .ds-table td::before { content:attr(data-label); color:#5b6b5d; font-size:10px; font-weight:500; padding-top:2px; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Clear daily operations",
+    "overview": "The implemented world places a quiet, warm workspace beside a dark forest-green navigation rail. Compact Manrope typography, pale sage surfaces, mint details, and clearly divided records make daily stock, sales, and reservation work easy to scan. This wording comes from the implemented direction contract; it is not an additional brand interview.\n\nThe user-selected reference establishes the palette and operational character across login, dashboard, inventory, sales, reservations, analytics, and user settings. The existing PJP HARDWARE name and logo remain the brand anchors. Hardware imagery supports the login and welcome banner; records, controls, and charts carry the working screens. Desktop counter use and mobile access remain design assumptions recorded in PRODUCT.md, rather than confirmed device research.",
+    "keyCharacteristics": [
+      "Dark forest navigation with a brighter selected row and a mint location dot.",
+      "Warm ivory and sage surfaces separated by fine borders and restrained tonal changes.",
+      "Compact Manrope headings, descriptive labels, and tabular operational values.",
+      "Responsive records that retain their labels and actions when tables become stacked rows.",
+      "Functional state feedback, visible keyboard focus, and reduced-motion support."
+    ],
+    "rules": [
+      {
+        "name": "The Labeled State Rule",
+        "body": "Keep a readable text label with stock, reservation, and role badges; color alone must not carry the record's meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "The Numeric Alignment Rule",
+        "body": "Preserve tabular numerals for metrics and operational tables so changing amounts and quantities remain easy to compare.",
+        "section": "typography"
+      },
+      {
+        "name": "The Surface Separation Rule",
+        "body": "Use the established surface tones and borders for working panels; retain stronger shadows for the implemented overlapping and framing surfaces.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the PJP HARDWARE name and existing logo across the working shell and login.",
+      "Do use forest navigation, warm ivory/sage surfaces, and the established green action hierarchy consistently across screens.",
+      "Do retain text labels with semantic status colors and visible focus on interactive controls.",
+      "Do preserve tabular values, wrapping record content, mobile cell labels, and reachable actions.",
+      "Do keep empty, loading, error, and unavailable states honest and tied to the underlying records.",
+      "Do preserve the existing drawer, dialog, product-picker, and reduced-motion behavior when extending components."
+    ],
+    "donts": [
+      "Don't replace the confirmed palette, Manrope family, or preserved brand assets as an incidental screen change.",
+      "Don't use color alone to distinguish stock, reservation, or role states.",
+      "Don't let long names, receipt references, or action groups force the page wider on phones.",
+      "Don't add unsupported growth claims, fabricated operational values, or success feedback without the corresponding result.",
+      "Don't treat the sidecar's generated tonal ramps as additional application colors or as user-approved palette choices."
+    ]
+  }
+}

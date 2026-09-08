@@ -1,3 +1,8 @@
+import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
+import StatCard from '../components/StatCard';
+import ActionPanel from '../components/ActionPanel';
 import React, { useState, useEffect } from 'react';
 import { Loader2, X, Plus, Edit2, Trash2, Search, AlertTriangle, FileSpreadsheet, Coins, Package } from 'lucide-react';
 import { supabase } from '../supabaseClient';
@@ -21,6 +26,8 @@ const Inventory: React.FC = () => {
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
   const [exporting, setExporting] = useState(false);
 
   // Add form
@@ -109,11 +116,11 @@ const Inventory: React.FC = () => {
     setUpdating(true); setError(null);
     try {
       const { error: updateError } = await supabase.from('products')
-        .update({ 
-          product_name: editName, 
-          unit: editUnit.trim() || 'pcs', 
-          price: parseFloat(editPrice), 
-          stock: parseInt(editStock) 
+        .update({
+          product_name: editName,
+          unit: editUnit.trim() || 'pcs',
+          price: parseFloat(editPrice),
+          stock: parseInt(editStock)
         })
         .eq('product_id', editProduct.product_id);
       if (updateError) throw updateError;
@@ -193,10 +200,11 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.product_id.toString().includes(searchQuery)
-  );
+  const filteredProducts = products.filter(p => {
+    const matches = p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) || p.product_id.toString().includes(searchQuery);
+    return matches && (stockFilter === 'all' || (stockFilter === 'low' ? p.available <= 5 && p.available > 0 : stockFilter === 'out' ? p.available <= 0 : p.available > 5));
+  }).sort((a,b) => sortBy === 'stock' ? a.available - b.available : a.product_name.localeCompare(b.product_name));
+  const { pageItems, pagination } = usePagination(filteredProducts, searchQuery + stockFilter + sortBy);
 
   // Inventory valuation — what the stock on hand is worth at selling price.
   // Uses total stock, not available, so reserved units are still counted as
@@ -206,49 +214,22 @@ const Inventory: React.FC = () => {
 
   return (
     <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {error && <div className="ui-alert ui-alert-error">{error}</div>}
-      {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
+      {error && <div role="alert" className="ui-alert ui-alert-error">{error}</div>}
+      {successMsg && <div role="status" className="ui-alert ui-alert-success">{successMsg}</div>}
 
       {/* ── Inventory Valuation Cards ── */}
-      <div className="stats-grid">
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Total Inventory Value
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              ₱{totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>All stock at selling price</span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', color: '#22C55E', justifyContent: 'center' }}>
-            <Coins size={20} />
-          </div>
-        </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-              Products Listed
-            </p>
-            <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{products.length}</h2>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {totalUnits.toLocaleString()} unit{totalUnits === 1 ? '' : 's'} on hand
-            </span>
-          </div>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', color: 'var(--primary)', justifyContent: 'center' }}>
-            <Package size={20} />
-          </div>
-        </div>
+      <div className="stats-grid">
+        <StatCard label="Total inventory value" value={error ? '—' : '₱' + totalInventoryValue.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} detail="All stock at selling price" icon={<Coins size={21} />} loading={loading} />
+        <StatCard label="Products listed" value={error ? '—' : products.length} detail={totalUnits.toLocaleString() + ' units on hand'} icon={<Package size={21} />} loading={loading} />
+        <StatCard label="Low stock items" value={error ? '—' : products.filter(p => p.available <= 5).length} detail="5 or fewer available units" icon={<AlertTriangle size={21} />} tone="amber" loading={loading} />
       </div>
 
-      {/* ── ADD PRODUCT — Premium inline layout ── */}
-      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Add New Product</h3>
+      <ActionPanel title="Add product" description="Add a new item to your inventory.">
         <form onSubmit={handleAddProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Product Name</label>
-            <input
+            <label className="form-label" htmlFor="inventory-field-1">Product Name</label>
+            <input id="inventory-field-1"
               type="text" className="form-input" placeholder="e.g. Copper Wire 12AWG"
               value={addName} onChange={(e) => setAddName(e.target.value)}
               required
@@ -256,26 +237,26 @@ const Inventory: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Unit Type (optional)</label>
-            <input
+            <label className="form-label" htmlFor="inventory-field-2">Unit Type (optional)</label>
+            <input id="inventory-field-2"
               type="text" className="form-input" placeholder="e.g. roll, box, pcs"
               value={addUnit} onChange={(e) => setAddUnit(e.target.value)}
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Unit Price (₱)</label>
-            <input
-              type="number" step="0.01" className="form-input" placeholder="0.00"
+            <label className="form-label" htmlFor="inventory-field-3">Unit Price (₱)</label>
+            <input id="inventory-field-3"
+              type="number" min="0" step="0.01" className="form-input" placeholder="0.00"
               value={addPrice} onChange={(e) => setAddPrice(e.target.value)}
               required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Initial Stock</label>
-            <input
-              type="number" className="form-input" placeholder="0"
+            <label className="form-label" htmlFor="inventory-field-4">Initial Stock</label>
+            <input id="inventory-field-4"
+              type="number" min="0" className="form-input" placeholder="0"
               value={addStock} onChange={(e) => setAddStock(e.target.value)}
               required
             />
@@ -285,7 +266,7 @@ const Inventory: React.FC = () => {
             {adding ? <Loader2 className="animate-spin" size={18} /> : <><Plus size={18} /> Add Product</>}
           </button>
         </form>
-      </div>
+      </ActionPanel>
 
       {/* ── Toolbar: Search ── */}
       <div className="mobile-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
@@ -293,7 +274,7 @@ const Inventory: React.FC = () => {
           <input
             type="text"
             className="form-input"
-            placeholder="Search inventory by name or ID..."
+            placeholder="Search inventory by name or ID..." aria-label="Search inventory by name or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
@@ -301,6 +282,10 @@ const Inventory: React.FC = () => {
           <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
         </div>
 
+        <div className="stock-filters">
+          <select className="form-select" aria-label="Filter by stock" value={stockFilter} onChange={e => setStockFilter(e.target.value)}><option value="all">All stock levels</option><option value="healthy">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+          <select className="form-select" aria-label="Sort inventory" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="name">Name A–Z</option><option value="stock">Low stock first</option></select>
+        </div>
         {products.length > 0 && (
           <button
             type="button"
@@ -329,13 +314,13 @@ const Inventory: React.FC = () => {
                   <th style={{ width: '80px' }}>ID</th>
                   <th>Product Details</th>
                   <th>Price</th>
-                  <th>Available Stock</th>
+                  <th>Available / Status</th>
                   <th>Reserved</th>
                   <th style={{ width: '150px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((p) => (
+                {pageItems.map((p) => (
                   <tr key={p.product_id}>
                     <td data-label="Product ID" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>#{p.product_id}</td>
                     <td data-label="Product Details">
@@ -345,19 +330,12 @@ const Inventory: React.FC = () => {
                       </div>
                     </td>
                     <td data-label="Unit Price" style={{ fontWeight: 600 }}>₱{p.price.toFixed(2)}</td>
-                    <td data-label="Available Stock">
-                      <span style={{ 
-                        color: p.available <= 5 ? 'var(--danger)' : 'var(--text-primary)', 
-                        fontWeight: p.available <= 5 ? 700 : 500 
-                      }}>
-                        {p.available}
-                      </span>
-                    </td>
+                    <td data-label="Available Stock"><div className="stock-cell"><strong>{p.available}</strong><span className={'badge ' + (p.available <= 0 ? 'badge-danger' : p.available <= 5 ? 'badge-warning' : 'badge-success')}>{p.available <= 0 ? 'Out of stock' : p.available <= 5 ? 'Low stock' : 'In stock'}</span></div></td>
                     <td data-label="Reserved Qty" style={{ color: 'var(--text-secondary)' }}>{p.reserved_stock}</td>
                     <td data-label="Actions" style={{ textAlign: 'center' }}>
                       <div className="table-row-actions" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                        <button 
-                          className="btn btn-secondary btn-sm" 
+                        <button
+                          className="btn btn-secondary btn-sm"
                           onClick={() => handleOpenEdit(p)}
                           style={{ padding: '0.45rem' }}
                           title="Edit Product"
@@ -381,14 +359,15 @@ const Inventory: React.FC = () => {
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>No products match your search.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{products.length ? 'No products match these filters. Try another search or stock level.' : 'Your inventory is empty. Use Add product to create your first item.'}</p>
           </div>
         )}
+        <Pagination {...pagination} />
       </div>
 
       {/* ── EDIT MODAL ── */}
       {editProduct && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content solid-modal" role="dialog" aria-modal="true" aria-labelledby="edit-product-title">
             <div className="modal-header">
               <h3 id="edit-product-title" style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit Product</h3>
@@ -396,20 +375,20 @@ const Inventory: React.FC = () => {
             </div>
             <form onSubmit={handleUpdateProduct}>
               <div className="form-group">
-                <label className="form-label">Product Name</label>
-                <input type="text" className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                <label className="form-label" htmlFor="inventory-field-5">Product Name</label>
+                <input id="inventory-field-5" type="text" className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} required />
               </div>
               <div className="form-group">
-                <label className="form-label">Unit Type</label>
-                <input type="text" className="form-input" value={editUnit} onChange={(e) => setEditUnit(e.target.value)} />
+                <label className="form-label" htmlFor="inventory-field-6">Unit Type</label>
+                <input id="inventory-field-6" type="text" className="form-input" value={editUnit} onChange={(e) => setEditUnit(e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">Price (₱)</label>
-                <input type="number" step="0.01" className="form-input" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} required />
+                <label className="form-label" htmlFor="inventory-field-7">Price (₱)</label>
+                <input id="inventory-field-7" type="number" min="0" step="0.01" className="form-input" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} required />
               </div>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">Total Stock</label>
-                <input type="number" className="form-input" value={editStock} onChange={(e) => setEditStock(e.target.value)} required />
+                <label className="form-label" htmlFor="inventory-field-8">Total Stock</label>
+                <input id="inventory-field-8" type="number" min="0" className="form-input" value={editStock} onChange={(e) => setEditStock(e.target.value)} required />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setEditProduct(null)}>Cancel</button>
@@ -419,12 +398,12 @@ const Inventory: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* ── DELETE CONFIRM MODAL ── */}
       {deleteProduct && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-product-title">
             <div className="modal-header">
               <h3 id="delete-product-title" className="delete-confirm-title">
@@ -438,13 +417,13 @@ const Inventory: React.FC = () => {
             <div className="delete-confirm-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setDeleteProduct(null)} disabled={deleting}>Cancel</button>
               <button
-                type="button" className="btn btn-primary" onClick={handleConfirmDelete} disabled={deleting}
+                type="button" className="btn btn-danger" onClick={handleConfirmDelete} disabled={deleting}
               >
                 {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

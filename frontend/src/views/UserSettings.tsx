@@ -1,5 +1,7 @@
+import Modal from '../components/Modal';
+import ActionPanel from '../components/ActionPanel';
 import React, { useState, useEffect } from 'react';
-import { Users, Edit2, Trash2, Loader2, X, RefreshCw, UserPlus, AlertTriangle } from 'lucide-react';
+import { Users, Edit2, Trash2, Loader2, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 interface User {
@@ -94,7 +96,7 @@ const UserSettings: React.FC = () => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const { createClient } = await import('@supabase/supabase-js');
       const tempSupabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
@@ -127,7 +129,7 @@ const UserSettings: React.FC = () => {
       setAddUsername('');
       setAddPassword('');
       setAddRole('Cashier');
-      
+
       fetchUsers();
     } catch (err: any) {
       console.error(err);
@@ -229,43 +231,40 @@ const UserSettings: React.FC = () => {
 
   return (
     <div className="view-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {error && <div className="ui-alert ui-alert-error">{error}</div>}
-      {successMsg && <div className="ui-alert ui-alert-success">{successMsg}</div>}
+      {error && <div role="alert" className="ui-alert ui-alert-error">{error}</div>}
+      {successMsg && <div role="status" className="ui-alert ui-alert-success">{successMsg}</div>}
 
+      <section className="staff-summary"><div><h2>{users.length} team member{users.length === 1 ? '' : 's'}</h2><p>Give each person the access they need to do their best work.</p></div><Users size={30} /></section>
       {/* ── ADD USER — Premium Form Grid ── */}
-      <div className="glass-panel responsive-panel" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <UserPlus size={18} style={{ color: 'var(--primary)' }} />
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Provision Staff Account</h3>
-        </div>
+      <ActionPanel title="Add staff member" description="Create an account and assign a role.">
         <form onSubmit={handleAddUser} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', alignItems: 'end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Full Name</label>
-            <input
+            <label className="form-label" htmlFor="usersettings-field-1">Full Name</label>
+            <input id="usersettings-field-1"
               type="text" className="form-input" placeholder="Name"
               value={addName} onChange={(e) => setAddName(e.target.value)} required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Username</label>
-            <input
+            <label className="form-label" htmlFor="usersettings-field-2">Username</label>
+            <input id="usersettings-field-2"
               type="text" className="form-input" placeholder="e.g. dice"
               value={addUsername} onChange={(e) => setAddUsername(e.target.value)} required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Temporary Password</label>
-            <input
+            <label className="form-label" htmlFor="usersettings-field-3">Temporary Password</label>
+            <input id="usersettings-field-3"
               type="password" className="form-input" placeholder="••••••••"
               value={addPassword} onChange={(e) => setAddPassword(e.target.value)} required
             />
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">System Role</label>
-            <select className="form-select" value={addRole} onChange={(e) => setAddRole(e.target.value)} required>
+            <label className="form-label" htmlFor="usersettings-field-4">System Role</label>
+            <select id="usersettings-field-4" className="form-select" value={addRole} onChange={(e) => setAddRole(e.target.value)} required>
               <option value="Admin">Admin</option>
               <option value="Manager">Manager</option>
               <option value="Cashier">Cashier</option>
@@ -276,17 +275,17 @@ const UserSettings: React.FC = () => {
             {adding ? <Loader2 className="animate-spin" size={18} /> : 'Create Account'}
           </button>
         </form>
-      </div>
+      </ActionPanel>
 
       {/* ── ACCOUNTS LIST TABLE ── */}
       <div className="glass-panel responsive-panel table-panel" style={{ padding: '2rem' }}>
         <div className="section-heading-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Users size={18} style={{ color: 'var(--text-secondary)' }} />
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Staff Registry</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>Team members</h3>
           </div>
           <button className="btn btn-secondary btn-sm" onClick={fetchUsers} style={{ gap: '0.4rem', height: '38px', borderRadius: '14px' }}>
-            <RefreshCw size={14} /> Refresh Registry
+            <RefreshCw size={14} /> Refresh
           </button>
         </div>
 
@@ -312,7 +311,7 @@ const UserSettings: React.FC = () => {
                     <td data-label="Username / Email" style={{ color: 'var(--text-secondary)' }}>{u.username}</td>
                     <td data-label="Access Role">
                       <span className={`badge ${
-                        u.role === 'Admin' ? 'badge-danger' : 
+                        u.role === 'Admin' ? 'badge-danger' :
                         u.role === 'Manager' ? 'badge-info' : 'badge-success'
                       }`}>
                         {u.role}
@@ -320,15 +319,15 @@ const UserSettings: React.FC = () => {
                     </td>
                     <td data-label="Actions" style={{ textAlign: 'center' }}>
                       <div className="table-row-actions" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                        <button 
-                          className="btn btn-secondary btn-sm" 
+                        <button
+                          className="btn btn-secondary btn-sm"
                           onClick={() => handleOpenEdit(u)}
                           style={{ padding: '0.45rem' }}
                           title="Edit User Profile"
                         >
                           <Edit2 size={13} />
                         </button>
-                        <button 
+                        <button
                           className="btn btn-sm delete-action-button"
                           onClick={() => setUserToDelete(u)}
                           style={{ padding: '0.45rem' }}
@@ -352,38 +351,38 @@ const UserSettings: React.FC = () => {
 
       {/* ── EDIT USER MODAL ── */}
       {editUser && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content solid-modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
             <div className="modal-header">
               <h3 id="edit-user-title" style={{ fontSize: '1.05rem', fontWeight: 700 }}>Edit User Profile</h3>
               <button type="button" className="modal-close" onClick={() => setEditUser(null)} disabled={updating} aria-label="Close edit user dialog"><X size={20} /></button>
             </div>
-            
+
             <form onSubmit={handleUpdateUser}>
               <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input type="text" className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                <label className="form-label" htmlFor="usersettings-field-5">Full Name</label>
+                <input id="usersettings-field-5" type="text" className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} required />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Username / Email</label>
-                <input type="text" className="form-input" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} required />
+                <label className="form-label" htmlFor="usersettings-field-6">Username / Email</label>
+                <input id="usersettings-field-6" type="text" className="form-input" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} required />
               </div>
 
               <div className="form-group">
-                <label className="form-label">New Password (leave blank to keep current)</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
+                <label className="form-label" htmlFor="usersettings-field-7">New Password (leave blank to keep current)</label>
+                <input id="usersettings-field-7"
+                  type="password"
+                  className="form-input"
                   placeholder="Enter new password"
-                  value={editPassword} 
-                  onChange={(e) => setEditPassword(e.target.value)} 
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
                 />
               </div>
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">System Role</label>
-                <select className="form-select" value={editRole} onChange={(e) => setEditRole(e.target.value)}>
+                <label className="form-label" htmlFor="usersettings-field-8">System Role</label>
+                <select id="usersettings-field-8" className="form-select" value={editRole} onChange={(e) => setEditRole(e.target.value)}>
                   <option value="Admin">Admin</option>
                   <option value="Manager">Manager</option>
                   <option value="Cashier">Cashier</option>
@@ -398,11 +397,11 @@ const UserSettings: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {userToDelete && (
-        <div className="modal-overlay">
+        <Modal>
           <div className="modal-content delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
             <div className="modal-header">
               <h3 id="delete-user-title" className="delete-confirm-title">
@@ -425,12 +424,12 @@ const UserSettings: React.FC = () => {
               <button type="button" className="btn btn-secondary" onClick={() => setUserToDelete(null)} disabled={deletingUser}>
                 Cancel
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleDeleteUser} disabled={deletingUser}>
+              <button type="button" className="btn btn-danger" onClick={handleDeleteUser} disabled={deletingUser}>
                 {deletingUser ? <Loader2 className="animate-spin" size={16} /> : 'Yes, Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
