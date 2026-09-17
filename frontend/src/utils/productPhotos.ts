@@ -1,9 +1,27 @@
 export const PRODUCT_PHOTO_BUCKET = 'product-photos';
 export const MAX_PRODUCT_PHOTO_BYTES = 5 * 1024 * 1024;
-export const PRODUCT_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const PRODUCT_PHOTO_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/jpg',
+  'image/pjpeg',
+  'image/x-png',
+];
+export const PRODUCT_PHOTO_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 
-export function validateProductPhoto(file: Pick<File, 'size' | 'type'>): void {
-  if (!PRODUCT_PHOTO_TYPES.includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP photo.');
+export function isSupportedPhotoType(type?: string, name?: string): boolean {
+  const normalizedType = (type || '').toLowerCase();
+  if (PRODUCT_PHOTO_TYPES.includes(normalizedType)) return true;
+  if (name) {
+    const ext = name.slice(name.lastIndexOf('.')).toLowerCase();
+    if (PRODUCT_PHOTO_EXTENSIONS.includes(ext)) return true;
+  }
+  return false;
+}
+
+export function validateProductPhoto(file: Pick<File, 'size' | 'type'> & { name?: string }): void {
+  if (!isSupportedPhotoType(file.type, file.name)) throw new Error('Choose a JPG, PNG, or WebP photo.');
   if (file.size === 0 || file.size > MAX_PRODUCT_PHOTO_BYTES) throw new Error('Choose a photo smaller than 5 MB.');
 }
 

@@ -12,7 +12,8 @@
     "test:ui": "node qa/inspect.cjs",
     "test:metrics": "node --test qa/metrics.test.ts",
     "test:inventory": "node --test qa/inventory.test.ts",
-    "test:inventory-ui": "node qa/inventory.cjs"
+    "test:inventory-ui": "node qa/inventory.cjs",
+    "test:reservations": "node --test qa/reservations.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",

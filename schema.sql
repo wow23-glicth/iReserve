@@ -185,6 +185,7 @@ grant execute on function public.record_sale_transaction(bigint, uuid, jsonb) to
 -- 5. Create Reservations Table
 create table public.reservations (
   reservation_id bigint generated always as identity primary key,
+  transaction_id uuid default gen_random_uuid(),
   product_id bigint references public.products(product_id) on delete cascade not null,
   customer_id bigint references public.customers(customer_id) on delete cascade not null,
   quantity integer not null check (quantity > 0),
@@ -193,6 +194,8 @@ create table public.reservations (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+create index if not exists reservations_transaction_id_idx on public.reservations (transaction_id);
+
 -- Enable RLS on Reservations
 alter table public.reservations enable row level security;
 
@@ -200,7 +203,32 @@ alter table public.reservations enable row level security;
 create policy "Allow access to reservations for all staff" on public.reservations
   for all using (auth.role() = 'authenticated');
 
--- 6. Trigger for Automatic Profile Creation on Supabase Auth Signup
+-- 6. Storage Bucket for Product Photos
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('product-photos', 'product-photos', false, 5242880, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do update set public = false, file_size_limit = 5242880,
+  allowed_mime_types = array['image/jpeg','image/png','image/webp'];
+
+drop policy if exists "Staff can view product photos" on storage.objects;
+create policy "Staff can view product photos" on storage.objects
+  for select to authenticated using (bucket_id = 'product-photos');
+
+drop policy if exists "Inventory managers can upload product photos" on storage.objects;
+create policy "Inventory managers can upload product photos" on storage.objects
+  for insert to authenticated with check (
+    bucket_id = 'product-photos'
+    and (storage.foldername(name))[1] = 'products'
+    and exists (select 1 from public.profiles where id = auth.uid() and role in ('Admin','Manager'))
+  );
+
+drop policy if exists "Inventory managers can remove product photos" on storage.objects;
+create policy "Inventory managers can remove product photos" on storage.objects
+  for delete to authenticated using (
+    bucket_id = 'product-photos'
+    and exists (select 1 from public.profiles where id = auth.uid() and role in ('Admin','Manager'))
+  );
+
+-- 7. Trigger for Automatic Profile Creation on Supabase Auth Signup
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -214,9 +242,6 @@ begin
   return new;
 end;
 $$ language plpgsql security definer;
-
--- After initial setup, also run inventory_photo_upgrade.sql to create private
--- product-photo storage and enforce nonnegative inventory writes.
 
 create trigger on_auth_user_created
   after insert on auth.users

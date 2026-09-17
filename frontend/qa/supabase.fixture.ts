@@ -12,7 +12,7 @@ const sales = Array.from({length:18},(_,i)=> {
  const p=products[i%13]; const customer=customers[i%5]; const day=date(i%7);
  return {sale_id:i+1,transaction_id:i<2?'d10c00b0-1234-5678-9012-123456789012':`d10c00b0-1234-5678-9012-${String(i).padStart(12,'0')}`,product_id:p.product_id,customer_id:customer.customer_id,quantity:(i%4)+1,total_amount:p.price*((i%4)+1),sale_date:day,created_at:day+'T10:15:00',products:{product_name:p.product_name,unit:p.unit},customers:{name:customer.name}};
 });
-const reservations=Array.from({length:15},(_,i)=>({reservation_id:i+1,customer_id:(i%5)+1,product_id:products[i%14].product_id,quantity:(i%3)+1,reservation_date:date(i%7),status:['Pending','Approved','Claimed','Cancelled'][i%4],products:{product_name:products[i%14].product_name,unit:'pcs'},customers:{name:customers[i%5].name}}));
+const reservations=Array.from({length:15},(_,i)=>({reservation_id:i+1,transaction_id:i<2?'b20c00b0-1234-5678-9012-123456789012':`b20c00b0-1234-5678-9012-${String(i).padStart(12,'0')}`,customer_id:(i%5)+1,product_id:products[i%14].product_id,quantity:(i%3)+1,reservation_date:date(i%7),created_at:date(i%7)+'T10:15:00',status:['Pending','Approved','Claimed','Cancelled'][i%4],products:{product_name:products[i%14].product_name,unit:'pcs',price:products[i%14].price},customers:{name:customers[i%5].name}}));
 const profiles=[{id:'qa-admin',name:'Admin',username:'admin',role},{id:'qa-manager',name:'Maria Santos',username:'maria',role:'Manager'},{id:'qa-cashier',name:'James Reyes',username:'james',role:'Cashier'}];
 const db: Record<string, any[]> = {products,customers,sales,reservations,profiles};
 const photoFiles: Record<string,string> = {};
