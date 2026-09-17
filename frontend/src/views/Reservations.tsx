@@ -843,10 +843,10 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
           </div>
         ) : filteredReservations.length > 0 ? (
           <div className="table-container">
-            <table className="custom-table reservations-table sales-table">
+            <table className="custom-table reservations-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40px', textAlign: 'center' }}>
+                  <th style={{ width: '44px', textAlign: 'center' }}>
                     <input
                       type="checkbox"
                       aria-label="Select all reservation orders on this page"
@@ -857,16 +857,16 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                   <th>Reference</th>
                   <th>Customer</th>
                   <th>Items Reserved</th>
-                  <th>Total Quantity</th>
+                  <th style={{ textAlign: 'center' }}>Total Quantity</th>
                   <th style={{ textAlign: 'center' }}>Est. Total</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
-                  <th style={{ width: '220px', textAlign: 'center' }}>Actions</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {pageItems.map((res) => (
                   <tr key={res.transaction_id}>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Select" className="reservation-select-cell" style={{ textAlign: 'center' }}>
                       <input
                         type="checkbox"
                         aria-label={`Select reservation ${res.reservation_number}`}
@@ -891,8 +891,8 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                         ))}
                       </ul>
                     </td>
-                    <td data-label="Total Quantity" style={{ fontWeight: 600 }}>{res.total_quantity}</td>
-                    <td data-label="Est. Total" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                    <td data-label="Total Quantity" style={{ textAlign: 'center', fontWeight: 600 }}>{res.total_quantity}</td>
+                    <td data-label="Est. Total" style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
                       {formatPeso(res.total_amount)}
                     </td>
                     <td data-label="Status" style={{ textAlign: 'center' }}>
@@ -909,7 +909,7 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                       </span>
                     </td>
                     <td data-label="Actions" style={{ textAlign: 'center' }}>
-                      <div className="table-row-actions" style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <div className="table-row-actions">
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary receipt-action-button"
@@ -972,21 +972,38 @@ const Reservations: React.FC<ReservationsProps> = ({ role }) => {
                         )}
 
                         {/* Delete Action */}
-                        <button
-                          type="button"
-                          className="btn btn-sm delete-action-button"
-                          onClick={() => setReservationToDelete(res)}
-                          disabled={actionId !== null}
-                          style={{ padding: '0.45rem' }}
-                          title="Delete reservation order"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {role === 'Admin' && (
+                          <button
+                            type="button"
+                            className="btn btn-sm delete-action-button"
+                            onClick={() => setReservationToDelete(res)}
+                            disabled={actionId !== null}
+                            style={{ padding: '0.45rem' }}
+                            title="Delete reservation order"
+                            aria-label={`Delete reservation ${res.reservation_number}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td data-label="Summary" colSpan={4} style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    TOTAL · ALL MATCHING RECORDS
+                  </td>
+                  <td data-label="Total Quantity" style={{ textAlign: 'center', fontWeight: 700 }}>
+                    {filteredReservations.reduce((sum, r) => sum + r.total_quantity, 0)}
+                  </td>
+                  <td data-label="Est. Total" style={{ textAlign: 'center', fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
+                    {formatPeso(filteredReservations.reduce((sum, r) => sum + r.total_amount, 0))}
+                  </td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
             </table>
           </div>
         ) : (

@@ -160,7 +160,15 @@ h3 { font-size:15px; letter-spacing:-.02em; } h4 { font-size:14px; } p { text-wr
 .sales-table th:first-child { width:20%; } .sales-table th:nth-child(2) { width:16%; } .sales-table th:nth-child(3) { width:25%; } .sales-table th:nth-child(4) { width:9%; } .sales-table th:last-child { width:16%; }
 .sales-receipt-reference strong { font-size:10px; } .sales-receipt-reference span { font-size:9px; }
 .sale-line-items { min-width:0; } .sale-line-items strong { font-size:10px; }
-.reservations-table th:first-child { width:17%; } .reservations-table th:nth-child(2) { width:21%; } .reservations-table th:nth-child(3) { width:9%; } .reservations-table th:nth-child(4) { width:17%; } .reservations-table th:nth-child(5) { width:13%; } .reservations-table th:last-child { width:23%; }
+.reservations-table { min-width:820px; }
+.reservations-table th:first-child, .reservations-table td:first-child { width:44px!important; min-width:44px; max-width:44px; text-align:center; }
+.reservations-table th:nth-child(2) { width:17%; min-width:135px; }
+.reservations-table th:nth-child(3) { width:13%; min-width:90px; }
+.reservations-table th:nth-child(4) { width:24%; min-width:165px; }
+.reservations-table th:nth-child(5) { width:9%; min-width:65px; text-align:center; }
+.reservations-table th:nth-child(6) { width:11%; min-width:85px; text-align:center; }
+.reservations-table th:nth-child(7) { width:10%; min-width:80px; text-align:center; }
+.reservations-table th:last-child { width:16%; min-width:145px; text-align:center; }
 .badge { display:inline-flex; align-items:center; justify-content:center; border-radius:5px; padding:3px 7px; font-size:9px; font-weight:700; line-height:1.6; white-space:nowrap; }
 .badge-info { color:var(--info); background:var(--info-bg); } .badge-success { color:var(--success); background:var(--success-bg); }
 .badge-warning { color:var(--warning); background:var(--warning-bg); } .badge-danger { color:var(--danger); background:var(--danger-bg); }
@@ -261,6 +269,9 @@ h3 { font-size:15px; letter-spacing:-.02em; } h4 { font-size:14px; } p { text-wr
  .toolbar-actions { gap:8px!important; width:100%; } .toolbar-actions .btn { flex:1; } .stock-filters { flex:1 1 100%; } .stock-filters select { flex:1; width:50%; font-size:12px; }
  .mobile-toolbar>.btn { margin-left:auto; } .responsive-panel { padding:15px!important; }
  .custom-table,.custom-table tbody,.custom-table tfoot { display:block; width:100%; }
+ .reservations-table { min-width:0!important; }
+ .reservations-table td.reservation-select-cell { display:flex!important; align-items:center; justify-content:space-between; width:100%!important; padding:4px 0 8px!important; border-bottom:1px dashed #dce6d4; margin-bottom:4px; }
+ .reservations-table td.reservation-select-cell::before { content:'SELECT ORDER'; color:var(--primary); font-size:10px; font-weight:700; }
  .custom-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
  .custom-table tr { display:block; width:100%; padding:12px 0; border-bottom:1px solid #dce6d4; }
  .custom-table tr:first-child { padding-top:0; } .custom-table tr:last-child { border-bottom:none; }

@@ -239,12 +239,14 @@
 }
 
 @media (max-width: 768px) {
-  .sales-table .sale-line-items {
+  .sales-table .sale-line-items,
+  .reservations-table .sale-line-items {
     min-width: 0;
     justify-self: stretch;
   }
 
-  .sales-table td[data-label="Items Purchased"] {
+  .sales-table td[data-label="Items Purchased"],
+  .reservations-table td[data-label="Items Reserved"] {
     align-items: start !important;
   }
 }
