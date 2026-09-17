@@ -156,7 +156,7 @@ h3 { font-size:15px; letter-spacing:-.02em; } h4 { font-size:14px; } p { text-wr
 .custom-table tfoot td { font-size:10px; background:#f1f6eb; padding-block:15px; }
 .custom-table .table-value-group { justify-content:flex-start!important; flex-wrap:wrap; }
 .table-row-actions { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; }
-.inventory-table th:first-child { width:58px!important; } .inventory-table th:nth-child(2) { width:29%; } .inventory-table th:last-child { width:110px!important; } .inventory-table th:nth-child(5) { width:10%; }
+.inventory-table th:first-child { width:74px!important; min-width:74px; } .inventory-table td[data-label="Product ID"] { white-space:nowrap; } .inventory-table th:nth-child(2) { width:29%; } .inventory-table th:last-child { width:110px!important; } .inventory-table th:nth-child(5) { width:10%; }
 .sales-table th:first-child { width:20%; } .sales-table th:nth-child(2) { width:16%; } .sales-table th:nth-child(3) { width:25%; } .sales-table th:nth-child(4) { width:9%; } .sales-table th:last-child { width:16%; }
 .sales-receipt-reference strong { font-size:10px; } .sales-receipt-reference span { font-size:9px; }
 .sale-line-items { min-width:0; } .sale-line-items strong { font-size:10px; }

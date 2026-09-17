@@ -360,7 +360,7 @@ const Inventory: React.FC = () => {
             <table className="custom-table inventory-table">
               <thead>
                 <tr>
-                  <th style={{ width: '80px' }}>ID</th>
+                  <th style={{ width: '74px', whiteSpace: 'nowrap' }}>ID</th>
                   <th>Product Details</th>
                   <th>Price</th>
                   <th>Available / Status</th>
@@ -371,14 +371,14 @@ const Inventory: React.FC = () => {
               <tbody>
                 {pageItems.map((p) => (
                   <tr key={p.product_id}>
-                    <td data-label="Product ID" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>#{p.product_id}</td>
+                    <td data-label="Product ID" style={{ color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>#{p.product_id}</td>
                     <td data-label="Product Details">
                       <div className="inventory-product-details">
                         <ProductThumbnail url={p.photo_url} name={p.product_name} />
                         <div className="table-value-group"><strong>{p.product_name}</strong><span className="badge badge-info">{p.unit}</span></div>
                       </div>
                     </td>
-                    <td data-label="Unit Price" style={{ fontWeight: 600 }}>₱{p.price.toFixed(2)}</td>
+                    <td data-label="Unit Price" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>₱{p.price.toFixed(2)}</td>
                     <td data-label="Available Stock"><div className="stock-cell"><strong>{p.available}</strong><span className={'badge ' + (p.available <= 0 ? 'badge-danger' : p.available <= 5 ? 'badge-warning' : 'badge-success')}>{p.available <= 0 ? 'Out of stock' : p.available <= 5 ? 'Low stock' : 'In stock'}</span><span className="stock-detail">{p.stock} on hand</span>{p.needs_review && <span className="stock-review">Stock needs review</span>}</div></td>
                     <td data-label="Reserved Qty" style={{ color: 'var(--text-secondary)' }}>{p.reserved_stock}</td>
                     <td data-label="Actions" style={{ textAlign: 'center' }}>
